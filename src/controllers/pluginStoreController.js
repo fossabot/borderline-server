@@ -94,7 +94,7 @@ PluginStoreController.prototype.deletePluginByID = function(req, res) {
 PluginStoreController.prototype.getPluginStoreUpload = function(req, res, next) {
     res.status(200);
     res.send(
-        '<form action="/pluginStore" method="post" enctype="multipart/form-data">'+
+        '<form action="/plugin_store" method="post" enctype="multipart/form-data">'+
         '<input type="file" name="plugin-zip" accept=".zip">'+
         '<input type="submit" value="Upload">'+
         '</form>'
@@ -105,7 +105,7 @@ PluginStoreController.prototype.getPluginStoreUploadByID = function(req, res, ne
     var id = req.params.id;
     res.status(200);
     res.send(
-        '<form action="/pluginStore/${id}" method="post" enctype="multipart/form-data">'+
+        '<form action="/plugin_store/${id}" method="post" enctype="multipart/form-data">'+
         '<input type="file" name="plugin-zip" accept=".zip">'+
         '<input type="submit" value="Upload">'+
         '</form>'

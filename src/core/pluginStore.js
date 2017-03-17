@@ -173,18 +173,29 @@ PluginStore.prototype.createPluginFromFile = function(file) {
     var buf = Buffer.from(file.buffer);
     var zip = new adm_zip(buf);
 
-    if (zip.getEntry('server.js') === null) {
-        return { error: 'Missing mandatory plugin file /server.js' };
+    //Find required manifest file
+    var manifest = null;
+    zip.getEntries().forEach(function (entry) {
+        if (entry.name === 'plugin.json')
+            manifest = entry;
+    });
+
+    if (manifest === null) {
+        return { error: 'Missing mandatory plugin manifest plugin.js' };
+    }
+    manifest = JSON.parse(manifest.getData());
+    if (manifest === null || manifest.hasOwnProperty('id') == false) {
+        return { error: 'Corrupted plugin manifest plugin.js' };
     }
 
     //Generate a non-colliding plugin UUID
-    var pluginUuid = Math.floor(Math.random() * 0xffffffffffffffffffffffff).toString(16);
+    var pluginUuid = manifest.id;
     while (that._findPluginById(pluginUuid) !== null)
-        pluginUuid = Math.floor(Math.random() * 0xffffffffffffffffffffffff).toString(16);
+        pluginUuid = Math.floor(Math.random() * 0xffffffffffff).toString(16);
 
-    zip.extractAllTo(that.pluginFolder + '/' + pluginUuid, true);
+    zip.extractAllTo(that.pluginFolder, true);
 
-    var new_plugin = new Plugin(pluginUuid, that.pluginFolder + '/' + pluginUuid);
+    var new_plugin = new Plugin(pluginUuid, that.pluginFolder + '/' + manifest.id);
     that.plugins.push(new_plugin);
     that._attachPlugin(new_plugin);
 
@@ -235,13 +246,9 @@ PluginStore.prototype.deletePluginById = function(uuid) {
 PluginStore.prototype.updatePluginById = function(uuid, file) {
     var buf = Buffer.from(file.buffer);
     var zip = new adm_zip(buf);
-    /*
-    if (zip.getEntry('package.json') === null) {
-        return { error: 'Missing mandatory plugin file /package.json' };
-    }
-    */
-    if (zip.getEntry('index.js') === null) {
-        return { error: 'Missing mandatory plugin file /server.js' };
+
+    if (zip.getEntry('plugin.json') === null) {
+        return { error: 'Missing mandatory plugin manifest plugin.js' };
     }
 
     var delReply = this.deletePluginById(uuid);
