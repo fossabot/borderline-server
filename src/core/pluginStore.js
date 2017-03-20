@@ -37,7 +37,7 @@ PluginStore.prototype._syncPlugin = function(plugin, operation) {
     operation =  typeof operation !== 'undefined' ? operation : 'update';
     var model = {
         uuid : plugin.uuid,
-        id: plugin.container ? plugin.container.id : null,
+        info: plugin.manifest,
         users: plugin.users ? plugin.users : [],
         enabled: true
     };
@@ -113,14 +113,15 @@ PluginStore.prototype._watchLocalFolder = function() {
                 var re = /(\/|\\)/;
                 var pluginDirectory = filename.split(re);
                 if (pluginDirectory && pluginDirectory.length > 0) {
-                    var uuid = pluginDirectory[0];
-                    var pluginPath = path.join(that.pluginFolder, uuid);
-                    var p = that._findPluginById(uuid);
+                    var folder = pluginDirectory[0];
+                    var pluginPath = path.join(that.pluginFolder, folder);
+                    var manifest = fs.readJsonSync(path.join(pluginPath, 'plugin.json'));
+                    var p = that._findPluginById(manifest.id);
                     if (p !== null) {
                         that._detachPlugin(p);
                         that.plugins.splice(that.plugins.findIndex(function(p) { return p.uuid == uuid }), 1);
                         if (fs.existsSync(pluginPath)) {
-                            var new_plugin = new Plugin(uuid, pluginPath);
+                            var new_plugin = new Plugin(pluginPath);
                             that._attachPlugin(new_plugin);
                             that.plugins.push(new_plugin);
                             that._syncPlugin(new_plugin, 'update');
@@ -128,7 +129,7 @@ PluginStore.prototype._watchLocalFolder = function() {
                     }
                     else {
                         if (fs.existsSync(pluginPath)) {
-                            var new_plugin = new Plugin(uuid, pluginPath);
+                            var new_plugin = new Plugin(pluginPath);
                             that._attachPlugin(new_plugin);
                             that.plugins.push(new_plugin);
                             that._syncPlugin(new_plugin, 'create');
@@ -148,7 +149,7 @@ PluginStore.prototype._scanLocalFolder = function() {
         var file_fd = fs.openSync(file, 'r');
         var file_stats = fs.fstatSync(file_fd);
         if (file_stats.isDirectory()) {
-            var plugin = new Plugin(f, file);
+            var plugin = new Plugin(file);
             that._attachPlugin(plugin);
             that.plugins.push(plugin);
             that._syncPlugin(plugin, 'update');
@@ -157,15 +158,7 @@ PluginStore.prototype._scanLocalFolder = function() {
 };
 
 PluginStore.prototype.listPlugins = function() {
-    var pluginList = {
-        count: 0,
-        plugins : []
-    };
-    this.plugins.forEach(function(p) {
-        pluginList.count++;
-        pluginList.plugins.push(p.infos());
-    });
-    return pluginList;
+    return this.plugins;
 };
 
 PluginStore.prototype.createPluginFromFile = function(file) {
@@ -189,13 +182,16 @@ PluginStore.prototype.createPluginFromFile = function(file) {
     }
 
     //Generate a non-colliding plugin UUID
-    var pluginUuid = manifest.id;
-    while (that._findPluginById(pluginUuid) !== null)
-        pluginUuid = Math.floor(Math.random() * 0xffffffffffff).toString(16);
+    while (that._findPluginById(manifest.id) !== null)
+        manifest.id = Math.floor(Math.random() * 0xffffffffffff).toString(16);
 
     zip.extractAllTo(that.pluginFolder, true);
 
-    var new_plugin = new Plugin(pluginUuid, that.pluginFolder + '/' + manifest.id);
+    var packageFolder =  path.join(that.pluginFolder, manifest.name + '-' + manifest.version);
+    //overwrite manifest ofter extraction for non colliding ids
+    fs.writeJsonSync(manifest, path.join(packageFolder, './plugin.json'));
+
+    var new_plugin = new Plugin(packageFolder);
     that.plugins.push(new_plugin);
     that._attachPlugin(new_plugin);
 
@@ -208,7 +204,7 @@ PluginStore.prototype.clearPlugins = function() {
         //Disconnect routes
         that._detachPlugin(plugin);
         //Remove local directory
-        fs.removeSync(that.pluginFolder + '/' + plugin.uuid);
+        fs.removeSync(path.join(that.pluginFolder, './' + plugin.manifest.name + '-' + plugin.manifest.version));
         //Remove from DB
         that._syncPlugin(plugin, 'delete');
     });

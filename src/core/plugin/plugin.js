@@ -1,17 +1,17 @@
 const express = require('express');
 const fs = require('fs-extra');
 const path = require('path');
-const mongodb = require('mongodb');
 
 const borderlineApiModule = require('./api');
 
-function Plugin(Uuid, PluginPath) {
-    this.uuid = Uuid;
-    this.router = express.Router();
+function Plugin(PluginPath) {
     this.pluginPath = PluginPath;
+    this.manifest = fs.readJsonSync(path.join(PluginPath, 'plugin.json'));
+    this.router = express.Router();
+    this.uuid = manifest.id;
 
     this.container = null;
-    this.borderlineApi = new borderlineApiModule(Uuid);
+    this.borderlineApi = new borderlineApiModule(this.manifest.id);
 
     //Importing the Plugin
     this.container = this.webpackImporter(PluginPath);
@@ -21,40 +21,21 @@ function Plugin(Uuid, PluginPath) {
 
     this.attach = Plugin.prototype.attach.bind(this);
     this.detach = Plugin.prototype.detach.bind(this);
-    this.infos = Plugin.prototype.infos.bind(this);
+    this.infos = Plugin.prototype.info.bind(this);
 }
 
-Plugin.prototype.infos = function() {
-    if (this.container === null || this.container === undefined) {
-        return  {
-            uuid: this.uuid,
-            error: 'Plugin context is empty'
-        };
-    }
-
-    return {
-        uuid: this.uuid,
-        id: this.container.id,
-        compiled: this.container.compiled,
-        router: this.router
-    };
+Plugin.prototype.info = function() {
+    return this.manifest;
 };
 
 Plugin.prototype.webpackImporter = function(importPath) {
     try {
-        var manifestPath = path.join(importPath, 'plugin.json');
-        if (fs.existsSync(manifestPath) === false)
-            return null;
-        var manifestBytes = fs.readFileSync(manifestPath);
-        var manifest = JSON.parse(manifestBytes);
-        if (manifest === null || manifest === undefined ||
-            manifest.id === null || manifest.id === undefined)
-            return null;
-        if (manifest.hasOwnProperty('server.js') == false || manifest.hasOwnProperty('client.js') == false)
+
+        if (this.manifest.hasOwnProperty('server.js') == false || this.manifest.hasOwnProperty('client.js') == false)
             return null;
 
-        var serverFile = path.join(importPath, manifest['server.js']);
-        var clientFile = path.join(importPath, manifest['client.js']);
+        var serverFile = path.join(importPath, this.manifest['server.js']);
+        var clientFile = path.join(importPath, this.manifest['client.js']);
 
         if (fs.existsSync(serverFile) === true) {
             //Read server module form filesystem
@@ -71,7 +52,7 @@ Plugin.prototype.webpackImporter = function(importPath) {
                 clientFile: clientFile,
                 pluginPath: importPath,
                 serverModule: new imported()
-            }, manifest);
+            });
 
             return plugin; //Success
         }
@@ -107,7 +88,6 @@ Plugin.prototype.importer = function(importPath) {
 
             //Create plugin container object
             var plugin = {
-                id: this.uuid,
                 compiled: false,
                 serverFile: serverFile,
                 clientFile: clientFile,
