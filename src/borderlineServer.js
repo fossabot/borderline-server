@@ -141,7 +141,7 @@ BorderlineServer.prototype.setupPluginStore = function() {
     this.app.use('/plugins', this.pluginStoreController.getPluginStoreRouter()); //Plugins routers connect here
     this.app.route('/plugin_store')
         .get(this.pluginStoreController.getPluginStore) //GET returns the list of available plugins
-        .post(m ulter().any(), this.pluginStoreController.postPluginStore) //POST upload a new plugin
+        .post(multer().any(), this.pluginStoreController.postPluginStore) //POST upload a new plugin
         .delete(this.userPermissionsMiddleware.adminPrivileges, this.pluginStoreController.deletePluginStore); //DELETE clears all the plugins
     this.app.route('/plugin_store/:id')
         .get(this.pluginStoreController.getPluginByID) //:id GET returns plugin metadata
