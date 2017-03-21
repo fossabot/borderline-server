@@ -8,7 +8,7 @@ function Plugin(PluginPath) {
     this.pluginPath = PluginPath;
     this.manifest = fs.readJsonSync(path.join(PluginPath, 'plugin.json'));
     this.router = express.Router();
-    this.uuid = manifest.id;
+    this.uuid = this.manifest.id;
 
     this.container = null;
     this.borderlineApi = new borderlineApiModule(this.manifest.id);

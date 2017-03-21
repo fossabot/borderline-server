@@ -35,31 +35,33 @@ PluginStore.prototype._scanDatabase = function() {
 PluginStore.prototype._syncPlugin = function(plugin, operation) {
     var that = this;
     operation =  typeof operation !== 'undefined' ? operation : 'update';
-    var model = {
-        uuid : plugin.uuid,
-        info: plugin.manifest,
+    var info = JSON.parse(JSON.stringify(plugin.manifest));
+    delete info['server.js'];
+    delete info['client.js'];
+    delete info['id'];
+    var model = Object.assign( {
         users: plugin.users ? plugin.users : [],
         enabled: true
-    };
+    }, info);
 
     return new Promise(function(resolve, reject) {
         var sync_success = function(success) { resolve(success); };
         var sync_error = function(error) { reject(error); };
 
         if (operation === 'update' || operation === 'create') {
-            that.pluginCollection.findOneAndReplace({_id: model.uuid}, model, {upsert: true})
+            that.pluginCollection.findOneAndReplace({_id: plugin.uuid}, model, {upsert: true})
                 .then(sync_success, sync_error);
         }
         else if (operation === 'disable') {
-            that.pluginCollection.findOneAndUpdate({ _id: model.uuid }, { $set: { enabled: false } })
+            that.pluginCollection.findOneAndUpdate({ _id: plugin.uuid }, { $set: { enabled: false } })
                 .then(sync_success, sync_error);
         }
         else if (operation === 'enable') {
-            that.pluginCollection.findOneAndUpdate({ _id: model.uuid }, { $set: { enabled: true } })
+            that.pluginCollection.findOneAndUpdate({ _id: plugin.uuid }, { $set: { enabled: true } })
                 .then(sync_success, sync_error);
         }
         else if (operation === 'delete' ) {
-            that.pluginCollection.findOneAndDelete({ _id: model.uuid })
+            that.pluginCollection.findOneAndDelete({ _id: plugin.uuid })
                 .then(sync_success, sync_error);
         }
         else {
@@ -119,7 +121,7 @@ PluginStore.prototype._watchLocalFolder = function() {
                     var p = that._findPluginById(manifest.id);
                     if (p !== null) {
                         that._detachPlugin(p);
-                        that.plugins.splice(that.plugins.findIndex(function(p) { return p.uuid == uuid }), 1);
+                        that.plugins.splice(that.plugins.findIndex(function(p) { return p.uuid == manifest.id }), 1);
                         if (fs.existsSync(pluginPath)) {
                             var new_plugin = new Plugin(pluginPath);
                             that._attachPlugin(new_plugin);
@@ -187,15 +189,16 @@ PluginStore.prototype.createPluginFromFile = function(file) {
 
     zip.extractAllTo(that.pluginFolder, true);
 
-    var packageFolder =  path.join(that.pluginFolder, manifest.name + '-' + manifest.version);
+    var packageFolder = path.join(that.pluginFolder, manifest.name + '-' + manifest.version);
+
     //overwrite manifest ofter extraction for non colliding ids
-    fs.writeJsonSync(manifest, path.join(packageFolder, './plugin.json'));
+    fs.writeJsonSync(path.join(packageFolder, './plugin.json'), manifest);
 
     var new_plugin = new Plugin(packageFolder);
     that.plugins.push(new_plugin);
     that._attachPlugin(new_plugin);
 
-    return {id: pluginUuid};
+    return {id: manifest.id};
 };
 
 PluginStore.prototype.clearPlugins = function() {
