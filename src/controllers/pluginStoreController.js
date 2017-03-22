@@ -24,7 +24,6 @@ PluginStoreController.prototype.getPluginStoreRouter = function() {
 
 PluginStoreController.prototype.getPluginStore = function(req, res) {
     var plugin_list = this.pluginStore.listPlugins();
-    console.log(plugin_list);
     res.status(200);
     res.json({ plugins: plugin_list });
 };
