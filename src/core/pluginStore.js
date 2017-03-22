@@ -34,15 +34,18 @@ PluginStore.prototype._scanDatabase = function() {
 
 PluginStore.prototype._syncPlugin = function(plugin, operation) {
     var that = this;
+    var model = null;
     operation =  typeof operation !== 'undefined' ? operation : 'update';
-    var info = JSON.parse(JSON.stringify(plugin.manifest));
-    delete info['server.js'];
-    delete info['client.js'];
-    delete info['id'];
-    var model = Object.assign( {
-        users: plugin.users ? plugin.users : [],
-        enabled: true
-    }, info);
+    if (operation === 'create' || operation === 'update') {
+        var info = JSON.parse(JSON.stringify(plugin.manifest));
+        delete info['server.js'];
+        delete info['client.js'];
+        delete info['id'];
+        var model = Object.assign({
+            users: plugin.users ? plugin.users : [],
+            enabled: true
+        }, info);
+    }
 
     return new Promise(function(resolve, reject) {
         var sync_success = function(success) { resolve(success); };
@@ -104,12 +107,14 @@ PluginStore.prototype._findPluginById = function(id) {
 PluginStore.prototype._watchLocalFolder = function() {
     var that = this;
     fs.watch(this.pluginFolder,
-            {
-                recursive: true,
-                encoding: 'utf8',
-                persistent: true
-            },
-            function(eventType, filename) {
+        {
+            recursive: true,
+            encoding: 'utf8',
+            persistent: true
+        },
+        function(eventType, filename)
+        {
+            try {
                 if (!filename)
                     return;
                 var re = /(\/|\\)/;
@@ -121,7 +126,9 @@ PluginStore.prototype._watchLocalFolder = function() {
                     var p = that._findPluginById(manifest.id);
                     if (p !== null) {
                         that._detachPlugin(p);
-                        that.plugins.splice(that.plugins.findIndex(function(p) { return p.uuid == manifest.id }), 1);
+                        that.plugins.splice(that.plugins.findIndex(function (p) {
+                            return p.uuid == manifest.id
+                        }), 1);
                         if (fs.existsSync(pluginPath)) {
                             var new_plugin = new Plugin(pluginPath);
                             that._attachPlugin(new_plugin);
@@ -139,6 +146,10 @@ PluginStore.prototype._watchLocalFolder = function() {
                     }
                 }
             }
+            catch (err) {
+                console.error('Error updating in development: ' + err);
+            }
+        }
     );
 };
 
@@ -160,7 +171,11 @@ PluginStore.prototype._scanLocalFolder = function() {
 };
 
 PluginStore.prototype.listPlugins = function() {
-    return this.plugins;
+    var list = [];
+    for (var i = 0; i < this.plugins.length; i++) {
+        list.push(this.plugins[i].info());
+    }
+    return list;
 };
 
 PluginStore.prototype.createPluginFromFile = function(file) {
