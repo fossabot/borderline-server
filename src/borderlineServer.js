@@ -173,11 +173,11 @@ BorderlineServer.prototype.mongoError = function(message) {
 
 BorderlineServer.prototype.pluginError = function(message) {
     this.app.all('/plugin_store', function(req, res) {
-        res.status(401);
+        res.status(204);
         res.json({ error: 'Plugin store is disabled: [' + message + ']' });
     });
     this.app.all('/plugins/*', function(req, res) {
-        res.status(401);
+        res.status(204);
         res.json({ error: 'Plugins are disabled: [' + message + ']'});
     });
 };
