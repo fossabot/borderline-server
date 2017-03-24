@@ -1,6 +1,6 @@
 {
   "name": "borderline-server",
-  "version": "0.1.17",
+  "version": "0.1.18",
   "description": "Multi-broswer visualization tool server",
   "main": "./src/borderlineServer.js",
   "scripts": {
