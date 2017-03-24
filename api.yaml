@@ -1,0 +1,108 @@
+---
+swagger: '2.0'
+info:
+  version: 0.0.1
+  title: Borderline server API
+  description: |
+    #### Rest API for the borderline project
+schemes:
+  - http
+host: 127.0.0.1:3000
+basePath: /
+paths:
+    /login:
+        post:
+            description: Initialize a new authenticated session
+            parameters:
+                -
+                    name: credentials
+                    required: true
+                    in: body
+                    schema:
+                        type: object
+                        properties:
+                            username:
+                                type: string
+                                description: Username part of the credentials
+                            password:
+                                type: string
+                                description: Password part of the credentials
+            responses:
+                200:
+                    description: Authentication success
+                401:
+                    description: Authentication failed
+                    schema:
+                        type: object
+                        properties:
+                            error:
+                                type: string
+                                description: A message describing why the login failed
+    /logout:
+        post:
+            description: Terminates the current session
+            responses:
+                401:
+                    description: Failed session end
+                    schema:
+                        type: object
+                        properties:
+                            error:
+                                type: string
+                                description: More information on the failed attempt
+
+                500:
+                    description: Internal session management error
+                    schema:
+                        type: object
+                        properties:
+                            error:
+                                type: string
+                                description: Message on this internal error
+                200:
+                    description: Successful session end
+    /whoami:
+        get:
+            description: Get the user from the current session
+            responses:
+                200:
+                    description: Session has a user
+                401:
+                    description: Session doesn't have a user
+                    schema:
+                        type: object
+                        properties:
+                            error:
+                                type: string
+                                description: A fun error message
+    /2step/login:
+        post:
+            description: Create a session using two step authentication
+            parameters:
+                -
+                    name: credentials
+                    required: true
+                    in: body
+                    schema:
+                        type: object
+                        properties:
+                            username:
+                                type: string
+                                description: Username part of the credentials
+                            password:
+                                type: string
+                                description: Password part of the credentials
+                            token:
+                                type: string
+                                description: 30 seconds valid two step token
+            responses:
+                200:
+                    description: Sucessful authentication
+                401:
+                    description: Authentication failed
+                    schema:
+                        type: object
+                        properties:
+                            error:
+                                type: string
+                                description: Message regarding the failure

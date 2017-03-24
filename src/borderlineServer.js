@@ -32,22 +32,28 @@ function BorderlineServer(config) {
     }
 
     var that = this;
-    mongodb.connect(global.config.mongoUrl, function(err, db) {
+    mongodb.connect(global.config.mongoUrl, function (err, db) {
         if (err !== null) {
             that.mongoError(err.toString());
             return that.app;
         }
         that.db = db;
-        that.mongoStore = new MongoStore({ db: that.db, ttl: 6 * (24 * 60 * 60) });
+        that.mongoStore = new MongoStore({db: that.db, ttl: 6 * (24 * 60 * 60)});
 
         //Middleware imports
         that.userPermissionsMiddleware = require('./middlewares/userPermissions');
 
         //Init external middleware
 
-        that.app.use(body_parser.urlencoded({ extended: true }));
+        that.app.use(body_parser.urlencoded({extended: true}));
         that.app.use(body_parser.json());
-        that.app.use(expressSession({ secret: 'borderline', saveUninitialized: false, resave: false ,  cookie: { secure: false }, store: that.mongoStore } ));
+        that.app.use(expressSession({
+            secret: 'borderline',
+            saveUninitialized: false,
+            resave: false,
+            cookie: {secure: false},
+            store: that.mongoStore
+        }));
         that.app.use(passport.initialize());
         that.app.use(passport.session());
 
@@ -60,6 +66,15 @@ function BorderlineServer(config) {
         //Remove unwanted express headers
         that.app.set('x-powered-by', false);
     });
+
+    //Allow CORS request for development mode
+    if (this.config.development === true) {
+        this.app.use(function (req, res, next) {
+            res.header("Access-Control-Allow-Origin", "*");
+            res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+            next();
+        });
+    }
 
     return this.app;
 }
