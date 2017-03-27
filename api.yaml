@@ -227,6 +227,176 @@ paths:
                     description: Failure, no plugin has been removed
                     schema:
                         $ref: '#/definitions/ErrorModel'
+    /users/{user_id}/plugins:
+        parameters:
+            -
+                name: user_id
+                required: true
+                type: string
+                in: path
+                description: User identifier for this query
+        get:
+            tags: [ user, plugin ]
+            description: List this user plugin
+            responses:
+                200:
+                    description: Success, returns list of plugins
+                    schema:
+                        type: array
+                        items:
+                            $ref: '#/definitions/PluginModel'
+                401:
+                    description: Failure, cannot list this user plugins
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+        delete:
+            tags: [ user, plugin ]
+            description: Removes all user plugins
+            responses:
+                200:
+                    description: User no longer uses plugins
+                401:
+                    description: Operation failed
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+    /users/{user_id}/plugins/{plugin_id}:
+        parameters:
+            -
+                name: user_id
+                required: true
+                type: string
+                in: path
+                description: User identifier for this query
+            -
+                name: plugin_id
+                required: true
+                type: string
+                in: path
+                description: Plugin target, using identifier
+        put:
+            tags: [ user, plugin ]
+            description: Enable plugin for this user
+            responses:
+                200:
+                    description: Successfuly enabled plugin
+                401:
+                    description: Enabling the plugin failed
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+        delete:
+            tags: [ user, plugin ]
+            description: Disable plugin for this user
+            responses:
+                200:
+                    description: Successfuly disabled plugin
+                401:
+                    description: Disabling the plugin failed
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+    /data_sources:
+        get:
+            tags: [ data source ]
+            description: List all known data sources
+            responses:
+                200:
+                    description: Successful listing
+                    schema:
+                        type: array
+                        items:
+                            $ref: '#/definitions/DataSourceModel'
+                401:
+                    description: Listing failed
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+        post:
+            tags: [ data source ]
+            description: Create a new data source
+            responses:
+                200:
+                    description: Created a new data source
+                    schema:
+                        $ref: '#/definitions/DataSourceModel'
+                401:
+                    description: Something went wrong during creation
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+    /data_sources/{source_id}:
+        parameters:
+            -
+                name: source_id
+                required: true
+                type: string
+                in: path
+                description: Identifier for the targeted data source
+        get:
+            tags: [ data source ]
+            description: Get a single data source information
+            responses:
+                200:
+                    description: Success dats source retreival
+                    schema:
+                        $ref: '#/definitions/DataSourceModel'
+                401:
+                    description: Failed to retreive this data source
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+        post:
+            tags: [ data source ]
+            description: Update a single data source
+            responses:
+                200:
+                    description: Update sucessfull
+                    schema:
+                        $ref: '#/definitions/DataSourceModel'
+                401:
+                    description: Update failed
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+        delete:
+            tags: [ data source ]
+            description: Forget a single data source
+            responses:
+                200:
+                    description: Data source has been removed
+                401:
+                    description: No deletion has occured
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+    /users/{user_id}/data_sources/{source_id}:
+        parameters:
+            -
+                name: user_id
+                required: true
+                type: string
+                in: path
+                description: User identifier to manipulate
+            -
+                name: source_id
+                required: true
+                type: string
+                in: path
+                description: Source identifier to use
+        post:
+            tags: [ user, data source ]
+            description: Subscribe a user to a specific data source
+            responses:
+                200:
+                    description: User has been subscribed
+                401:
+                    description: Failed to subscribe to data source
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+        delete:
+            tags: [ user, data source ]
+            description: Unsubscribe user from a specific data source
+            responses:
+                200:
+                    description: Unsubsribe success
+                401:
+                    description: Unsubscribe operation failed
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+
 definitions:
     ErrorModel:
         type: object
