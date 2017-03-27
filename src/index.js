@@ -12,7 +12,8 @@ app.use(BorderlineServer({
         pluginSourcesFolder: config.pluginSourcesFolder,
         pluginFileSystemFolder: config.pluginFileSystemFolder,
         uiFolder: config.uiFolder,
-        development: true
+        development: true,
+        enableCors: config.enableCors
     }
 ));
 

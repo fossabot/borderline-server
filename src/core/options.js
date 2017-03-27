@@ -8,6 +8,7 @@ var Options = function(configuration) {
     this.pluginFileSystemFolder = configuration.pluginFileSystemFolder ? configuration.pluginFileSystemFolder : './.plugins/filesystem';
     this.borderlineUiFolder =  configuration.borderlineUiFolder ? configuration.borderlineUiFolder : './node-modules/borderline-ui';
     this.development = configuration.development ? configuration.development : false;
+    this.enableCors  = configuration.enableCors ? configuration.enableCors : false;
 
     this._ensureFolder(this.pluginSourcesFolder);
     this._ensureFolder(this.pluginFileSystemFolder);

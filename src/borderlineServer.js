@@ -68,7 +68,7 @@ function BorderlineServer(config) {
     });
 
     //Allow CORS request for development mode
-    if (this.config.development === true) {
+    if (this.config.enableCors === true) {
         this.app.use(function (req, res, next) {
             res.header("Access-Control-Allow-Origin", "*");
             res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
