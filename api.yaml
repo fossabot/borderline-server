@@ -12,6 +12,7 @@ basePath: /
 paths:
     /login:
         post:
+            tags: [ auth, session ]
             description: Initialize a new authenticated session
             parameters:
                 -
@@ -33,50 +34,39 @@ paths:
                 401:
                     description: Authentication failed
                     schema:
-                        type: object
-                        properties:
-                            error:
-                                type: string
-                                description: A message describing why the login failed
+                        $ref: '#/definitions/ErrorModel'
     /logout:
         post:
+            tags: [ auth, session ]
             description: Terminates the current session
             responses:
                 401:
                     description: Failed session end
                     schema:
-                        type: object
-                        properties:
-                            error:
-                                type: string
-                                description: More information on the failed attempt
+                        $ref: '#/definitions/ErrorModel'
 
                 500:
                     description: Internal session management error
                     schema:
-                        type: object
-                        properties:
-                            error:
-                                type: string
-                                description: Message on this internal error
+                        $ref: '#/definitions/ErrorModel'
                 200:
                     description: Successful session end
     /whoami:
         get:
+            tags: [ session ]
             description: Get the user from the current session
             responses:
                 200:
                     description: Session has a user
+                    schema:
+                        $ref: '#/definitions/UserModel'
                 401:
                     description: Session doesn't have a user
                     schema:
-                        type: object
-                        properties:
-                            error:
-                                type: string
-                                description: A fun error message
+                        $ref: '#/definitions/ErrorModel'
     /2step/login:
         post:
+            tags: [ auth, session ]
             description: Create a session using two step authentication
             parameters:
                 -
@@ -101,8 +91,208 @@ paths:
                 401:
                     description: Authentication failed
                     schema:
-                        type: object
-                        properties:
-                            error:
-                                type: string
-                                description: Message regarding the failure
+                        $ref: '#/definitions/ErrorModel'
+    /2step/{user_id}:
+        put:
+            tags: [ auth, session ]
+            description: Regenerate user two factor secret key
+            parameters:
+                -
+                    name: user_id
+                    required: true
+                    in: path
+                    type: string
+                    description: Target user id to regenerate for
+            responses:
+                200:
+                    description: Successful generation
+                    schema:
+                        type: string
+                403:
+                    description: Generation failed
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+    /users:
+        get:
+            tags: [ user ]
+            description: List all the users. Requires admin privileges
+            responses:
+                200:
+                    description: Listing successful
+                    schema:
+                        type: array
+                        items:
+                            $ref: '#/definitions/UserModel'
+                401:
+                    description: Fails to list users
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+    /users/{user_id}:
+        parameters:
+            -
+                name: user_id
+                required: true
+                type: string
+                in: path
+                description: User identifier
+        get:
+            tags: [ user ]
+            description: Get a specific user
+
+            responses:
+                200:
+                    description: Found this user
+                    schema:
+                        $ref: '#/definitions/UserModel'
+                404:
+                    description: User is unknown
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+        post:
+            tags: [ user ]
+            description: Update a specific user
+            responses:
+                200:
+                    description: Update user success
+                    schema:
+                        $ref: '#/definitions/UserModel'
+                401:
+                    description: Update user failed
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+        delete:
+            tags: [ user ]
+            description: Delete a specific user
+            responses:
+                200:
+                    description: User has been deleted
+                401:
+                    description: Failed to delete user
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+    /plugin_store:
+        get:
+            tags: [ plugin ]
+            description: List all the plugins
+            responses:
+                200:
+                    description: Successful listing
+                    schema:
+                        type: array
+                        items:
+                            $ref: '#/definitions/PluginModel'
+    /plugin_store/{plugin_id}:
+        parameters:
+            -
+                name: plugin_id
+                required: true
+                description: Id of the plugin
+                in: path
+                type: string
+        get:
+            tags: [ plugin ]
+            description: Get a plugin\
+            responses:
+                200:
+                    description: Success, replies plugin information
+                    schema:
+                        $ref: '#/definitions/PluginModel'
+                401:
+                    description: Cannot retreive plugin information
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+        post:
+            tags: [ plugin ]
+            description: Update plugin content
+            responses:
+                200:
+                    description: Successfuly updated plugin
+                    schema:
+                        $ref: '#/definitions/PluginModel'
+                401:
+                    description: Failed to update plugin
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+                406:
+                    description: Missing plugin files
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+        delete:
+            tags: [ plugin ]
+            description: Removes plugin from server
+            responses:
+                200:
+                    description: Success, plugin is removed
+                401:
+                    description: Failure, no plugin has been removed
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+definitions:
+    ErrorModel:
+        type: object
+        properties:
+            error:
+                type: string
+                description: A more detailed error message
+    UserModel:
+        type: object
+        properties:
+            _id:
+                type: string
+                description: User unique identifier
+            username:
+                type: string
+            password:
+                type: string
+                description: Password hash
+            admin:
+                type: boolean
+                description: Administrator privileges flag
+    DataSourceModel:
+        type: object
+        properties:
+            sourceType:
+                type: string
+                description: Type of the underlying endpoint. Transmart, I2B2, ...
+            sourceName:
+                type: string
+                description: Display name
+            sourceHost:
+                type: string
+                description: Url or Ip where the source is hosted
+            sourcePort:
+                type: integer
+                description: Port used by this endpoint
+            public:
+                type: boolean
+                description: Publicly available, without auth endpoint
+            users:
+                type: array
+                items:
+                    type: string
+                    description: User unique ID
+                description: Array of users subscribed to this source
+    PluginModel:
+        type: object
+        properties:
+            _id:
+                type: string
+                description: Plugin unique identifier
+            enabled:
+                type: boolean
+                description: Is this plugin active on the server
+            name:
+                type: string
+                description: Display name
+            description:
+                type: string
+                description: Display description
+            author:
+                type: string
+                description: Display authors
+            build:
+                type: string
+                description: Unique build hash
+            version:
+                type: string
+                description: Plugin version
