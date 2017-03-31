@@ -466,3 +466,96 @@ definitions:
             version:
                 type: string
                 description: Plugin version
+    CohortStepModel:
+        type: object
+        properties:
+            name:
+                type: string
+                description: Step display name, user defined label
+            cohorts:
+                type: array
+                items:
+                    type: object
+                    properties:
+                        query:
+                            type: string
+                            description: Query transmart 17.1 style
+    AnalysisStepModel:
+        type: object
+        properties:
+            name:
+                type: string
+                description: Analysis label and display name
+            code:
+                type: string
+                description: The code to run for this analysis
+            params:
+                type: array
+                items:
+                    type: object
+                    description: Input parameters for the code
+    ResultStepModel:
+        type: object
+        properties:
+            job:
+                type: string
+                description: Job unique identifier on cloud infrastructure
+    StepModel:
+        type: object
+        properties:
+            _id:
+                type: string
+                description: Step unique identifier
+            workflow:
+                type: string
+                description: Workflow unique identifier this step belongs to
+            user:
+                type: string
+                description: Unique identifier of the creator
+            type:
+                type: string
+                description: Categorize the step. Can be cohort, analysis or result
+            cohort:
+                $ref: '#/definitions/CohortStepModel'
+            analysis:
+                $ref: '#/definitions/AnalysisStepModel'
+            result:
+                $ref: '#/definitions/ResultStepModel'
+
+    WorkflowModel:
+        type: object
+        properties:
+            _id:
+                type: string
+                description: Workflow unique identifier
+            owner:
+                type: string
+                description: User owning the workflow by unique identifier
+            read:
+                type: array
+                description: Users with read access on this workflow
+                items:
+                    type: string
+                    description: User unique identifier
+            write:
+                type: array
+                description: Users with write access on this workflow
+                items:
+                    type: string
+                    description: User unique identifer
+            graph:
+                type: object
+                description: Steps unique identifiers hierarchy
+                properties:
+                    id:
+                        type: string
+                        description: Step identifier
+                    parent:
+                        type: string
+                        description: Step unique identifier from which this step is derived
+                    children:
+                        type: array
+                        description: List of steps unique identifiers derived from this step
+                        items:
+                            type: string
+                            description: Step uuid
