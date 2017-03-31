@@ -521,7 +521,21 @@ definitions:
                 $ref: '#/definitions/AnalysisStepModel'
             result:
                 $ref: '#/definitions/ResultStepModel'
-
+    WorkflowStepModel:
+        type: object
+        description: Workflow step description
+        properties:
+            id:
+                type: string
+                description: Step unique identifier
+            parent:
+                type: string
+                description: Step unique identifier from which this step is derived
+            children:
+                type: array
+                description: List of steps unique identifiers derived from this step. Recursive type WorkflowStepModel
+                items:
+                    type: object
     WorkflowModel:
         type: object
         properties:
@@ -543,19 +557,5 @@ definitions:
                 items:
                     type: string
                     description: User unique identifer
-            graph:
-                type: object
-                description: Steps unique identifiers hierarchy
-                properties:
-                    id:
-                        type: string
-                        description: Step identifier
-                    parent:
-                        type: string
-                        description: Step unique identifier from which this step is derived
-                    children:
-                        type: array
-                        description: List of steps unique identifiers derived from this step
-                        items:
-                            type: string
-                            description: Step uuid
+            root:
+                $ref: '#/definitions/WorkflowStepModel'
