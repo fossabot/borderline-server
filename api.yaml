@@ -1,7 +1,7 @@
 ---
 swagger: '2.0'
 info:
-  version: 0.0.1
+  version: 0.0.2
   title: Borderline server API
   description: |
     #### Rest API for the borderline project
@@ -156,7 +156,7 @@ paths:
                     description: Update user success
                     schema:
                         $ref: '#/definitions/UserModel'
-                401:
+                default:
                     description: Update user failed
                     schema:
                         $ref: '#/definitions/ErrorModel'
@@ -166,68 +166,68 @@ paths:
             responses:
                 200:
                     description: User has been deleted
-                401:
+                default:
                     description: Failed to delete user
                     schema:
                         $ref: '#/definitions/ErrorModel'
-    /plugin_store:
+    /extension_store:
         get:
-            tags: [ plugin ]
-            description: List all the plugins
+            tags: [ extension ]
+            description: List all the extensions
             responses:
                 200:
                     description: Successful listing
                     schema:
                         type: array
                         items:
-                            $ref: '#/definitions/PluginModel'
-    /plugin_store/{plugin_id}:
+                            $ref: '#/definitions/ExtensionModel'
+    /extension_store/{extension_id}:
         parameters:
             -
-                name: plugin_id
+                name: extension_id
                 required: true
-                description: Id of the plugin
+                description: Id of the extension
                 in: path
                 type: string
         get:
-            tags: [ plugin ]
-            description: Get a plugin\
+            tags: [ extension ]
+            description: Get an extension
             responses:
                 200:
-                    description: Success, replies plugin information
+                    description: Success, replies extension information
                     schema:
-                        $ref: '#/definitions/PluginModel'
-                401:
-                    description: Cannot retreive plugin information
+                        $ref: '#/definitions/ExtensionModel'
+                default:
+                    description: Cannot retreive extension information
                     schema:
                         $ref: '#/definitions/ErrorModel'
         post:
-            tags: [ plugin ]
-            description: Update plugin content
+            tags: [ extension ]
+            description: Update extension content
             responses:
                 200:
-                    description: Successfuly updated plugin
+                    description: Successfuly updated extension
                     schema:
-                        $ref: '#/definitions/PluginModel'
-                401:
-                    description: Failed to update plugin
+                        $ref: '#/definitions/ExtensionModel'
+                default:
+                    description: Failed to update extension
                     schema:
                         $ref: '#/definitions/ErrorModel'
                 406:
-                    description: Missing plugin files
+                    description: Missing extension files
                     schema:
                         $ref: '#/definitions/ErrorModel'
         delete:
-            tags: [ plugin ]
-            description: Removes plugin from server
+            tags: [ extension ]
+            description: Removes extension from server
             responses:
                 200:
-                    description: Success, plugin is removed
+                    description: Success, extension is removed
                 401:
-                    description: Failure, no plugin has been removed
+                    description: Failure, no extension has been removed
                     schema:
                         $ref: '#/definitions/ErrorModel'
-    /users/{user_id}/plugins:
+    /users/{user_id}/extensions:
         parameters:
             -
                 name: user_id
@@ -236,30 +236,30 @@ paths:
                 in: path
                 description: User identifier for this query
         get:
-            tags: [ user, plugin ]
-            description: List this user plugin
+            tags: [ user, extension ]
+            description: List this user Extension
             responses:
                 200:
-                    description: Success, returns list of plugins
+                    description: Success, returns list of extensions
                     schema:
                         type: array
                         items:
-                            $ref: '#/definitions/PluginModel'
-                401:
-                    description: Failure, cannot list this user plugins
+                            $ref: '#/definitions/ExtensionModel'
+                default:
+                    description: Failure, cannot list this user extensions
                     schema:
                         $ref: '#/definitions/ErrorModel'
         delete:
-            tags: [ user, plugin ]
-            description: Removes all user plugins
+            tags: [ user, extension ]
+            description: Removes all user extensions
             responses:
                 200:
-                    description: User no longer uses plugins
-                401:
+                    description: User no longer uses extensions
+                default:
                     description: Operation failed
                     schema:
                         $ref: '#/definitions/ErrorModel'
-    /users/{user_id}/plugins/{plugin_id}:
+    /users/{user_id}/extensions/{extension_id}:
         parameters:
             -
                 name: user_id
@@ -268,29 +268,29 @@ paths:
                 in: path
                 description: User identifier for this query
             -
-                name: plugin_id
+                name: extension_id
                 required: true
                 type: string
                 in: path
-                description: Plugin target, using identifier
+                description: Extension target, using identifier
         put:
-            tags: [ user, plugin ]
-            description: Enable plugin for this user
+            tags: [ user, extension ]
+            description: Enable extension for this user
             responses:
                 200:
-                    description: Successfuly enabled plugin
+                    description: Successfuly enabled extension
                 401:
-                    description: Enabling the plugin failed
+                    description: Enabling the extension failed
                     schema:
                         $ref: '#/definitions/ErrorModel'
         delete:
-            tags: [ user, plugin ]
-            description: Disable plugin for this user
+            tags: [ user, extension ]
+            description: Disable extension for this user
             responses:
                 200:
-                    description: Successfuly disabled plugin
+                    description: Successfuly disabled extension
                 401:
-                    description: Disabling the plugin failed
+                    description: Disabling the extension failed
                     schema:
                         $ref: '#/definitions/ErrorModel'
     /data_sources:
@@ -304,7 +304,7 @@ paths:
                         type: array
                         items:
                             $ref: '#/definitions/DataSourceModel'
-                401:
+                default:
                     description: Listing failed
                     schema:
                         $ref: '#/definitions/ErrorModel'
@@ -316,7 +316,7 @@ paths:
                     description: Created a new data source
                     schema:
                         $ref: '#/definitions/DataSourceModel'
-                401:
+                default:
                     description: Something went wrong during creation
                     schema:
                         $ref: '#/definitions/ErrorModel'
@@ -333,10 +333,10 @@ paths:
             description: Get a single data source information
             responses:
                 200:
-                    description: Success dats source retreival
+                    description: Successful data source retreival
                     schema:
                         $ref: '#/definitions/DataSourceModel'
-                401:
+                default:
                     description: Failed to retreive this data source
                     schema:
                         $ref: '#/definitions/ErrorModel'
@@ -348,7 +348,7 @@ paths:
                     description: Update sucessfull
                     schema:
                         $ref: '#/definitions/DataSourceModel'
-                401:
+                default:
                     description: Update failed
                     schema:
                         $ref: '#/definitions/ErrorModel'
@@ -358,7 +358,7 @@ paths:
             responses:
                 200:
                     description: Data source has been removed
-                401:
+                default:
                     description: No deletion has occured
                     schema:
                         $ref: '#/definitions/ErrorModel'
@@ -382,7 +382,7 @@ paths:
             responses:
                 200:
                     description: User has been subscribed
-                401:
+                default:
                     description: Failed to subscribe to data source
                     schema:
                         $ref: '#/definitions/ErrorModel'
@@ -392,11 +392,200 @@ paths:
             responses:
                 200:
                     description: Unsubsribe success
-                401:
+                default:
                     description: Unsubscribe operation failed
                     schema:
                         $ref: '#/definitions/ErrorModel'
-
+    /workflows/:
+        put:
+            tags: [ workflow ]
+            description: Creates a new workflow
+            parameters:
+                -
+                    name: New workflow
+                    required: true
+                    in: body
+                    schema:
+                        type: object
+                        properties:
+                            name:
+                                description: "Name of the new workflow"
+                                type: string
+                            user:
+                                description: "User identifier creating the workflow.(Optional: Defaults to current user)"
+                                type: string
+                            root:
+                                description: "Root unique identifier for the new workflow. (Optional: Defaults to null)"
+                                type: string
+            responses:
+                200:
+                    description: Creation success
+                    schema:
+                        $ref: '#/definitions/WorkflowModel'
+                401:
+                    description: Creation failure
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+        get:
+            tags: [ workflow ]
+            description: List all the workflows
+            responses:
+                200:
+                    description: Listing successful
+                    schema:
+                        type: array
+                        items:
+                            $ref: '#/definitions/WorkflowModel'
+                401:
+                    description: Listing failed
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+    /workflow/{workflow_id}:
+        parameters:
+            -
+                name: workflow_id
+                required: true
+                in: path
+                type: string
+                description: Target workflow unique identifier
+        get:
+            tags: [ workflow ]
+            description: Get a workflow from it's unique identifier
+            responses:
+                200:
+                    description: Found the queried worflow
+                    schema:
+                        $ref: '#/definitions/WorkflowModel'
+                default:
+                    description: Getting from unique identifier failed
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+        post:
+            tags: [ workflow ]
+            description: Update a workflow from its unique identifier
+            responses:
+                200:
+                    description: Update sucessful
+                    schema:
+                        $ref: '#/definitions/WorkflowModel'
+                default:
+                    description: Update failed, nothing has been modified
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+        delete:
+            tags: [ workflow ]
+            description: Delete a workflow fcrom it's unique identifier
+            responses:
+                200:
+                    description: Delete successful
+                default:
+                    description: Operation failed, nothing removed
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+    /workflow/{workflow_id}/step:
+        parameters:
+            -
+                name: workflow_id
+                required: true
+                type: string
+                description: Target workflow unique identifier
+                in: path
+        get:
+            tags: [ workflow, step ]
+            description: List this workflow steps
+            responses:
+                200:
+                    description: Listing success
+                    schema:
+                        $ref: '#/definitions/StepModel'
+                default:
+                    description: Error occured while listing
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+        put:
+            tags: [ workflow, step ]
+            description: Create a new step in this workflow
+            parameters:
+                -
+                    name: step
+                    description: Step creation data
+                    in: body
+                    schema:
+                        type: object
+                        properties:
+                            parent:
+                                type: string
+                                description: Parent step unique identifier, null for root step
+                            extension:
+                                type: string
+                                description: Extension used during this new Step
+                            action:
+                                type: string
+                                description: Action registered by the Extension
+                            data:
+                                type: object
+                                description: Context data from the extension
+            responses:
+                200:
+                    description: Creation success
+                    schema:
+                        $ref: '#/definitions/StepModel'
+                default:
+                    description: Opreration failed
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+    /workflow/{workflow_id}/step/{step_id}:
+        parameters:
+            -
+                name: workflow_id
+                required: true
+                type: string
+                description: Target workflow unique identifier
+                in: path
+            -
+                name: step_id
+                required: true
+                type: string
+                description: Target step unique identifier
+                in: path
+        get:
+            tags: [ workflow,  step ]
+            description: Get a step from it's unique identifier in a specific workflow
+            responses:
+                200:
+                    description: Step found, success
+                    schema:
+                        $ref: '#/definitions/StepModel'
+                default:
+                    description: Operation failed
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+                404:
+                    description: No matching id operation failed
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+        post:
+            tags: [ workflow, step ]
+            description: Update a step in this workflow, by unique identifier
+            responses:
+                200:
+                    description: Step update success
+                    schema:
+                        $ref: '#/definitions/StepModel'
+                default:
+                    description: Step update failed, nothing changed
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
+        delete:
+            tags: [ workflow, step ]
+            description: Removes a specific step form a workflow
+            responses:
+                200:
+                    description: Delete operation success
+                default:
+                    description: Delete opration failed
+                    schema:
+                        $ref: '#/definitions/ErrorModel'
 definitions:
     ErrorModel:
         type: object
@@ -442,15 +631,15 @@ definitions:
                     type: string
                     description: User unique ID
                 description: Array of users subscribed to this source
-    PluginModel:
+    ExtensionModel:
         type: object
         properties:
             _id:
                 type: string
-                description: Plugin unique identifier
+                description: Extension unique identifier
             enabled:
                 type: boolean
-                description: Is this plugin active on the server
+                description: Is this extension active on the server
             name:
                 type: string
                 description: Display name
@@ -465,62 +654,36 @@ definitions:
                 description: Unique build hash
             version:
                 type: string
-                description: Plugin version
-    CohortStepModel:
-        type: object
-        properties:
-            name:
-                type: string
-                description: Step display name, user defined label
-            cohorts:
-                type: array
-                items:
-                    type: object
-                    properties:
-                        query:
-                            type: string
-                            description: Query transmart 17.1 style
-    AnalysisStepModel:
-        type: object
-        properties:
-            name:
-                type: string
-                description: Analysis label and display name
-            code:
-                type: string
-                description: The code to run for this analysis
-            params:
-                type: array
-                items:
-                    type: object
-                    description: Input parameters for the code
-    ResultStepModel:
-        type: object
-        properties:
-            job:
-                type: string
-                description: Job unique identifier on cloud infrastructure
+                description: Extension version
     StepModel:
         type: object
         properties:
             _id:
                 type: string
                 description: Step unique identifier
+            create:
+                type: string
+                format: dateTime
+                description: String containing the date and time of creation
+            update:
+                type: string
+                format: dateTime
+                description: String containing the date and time of the last update
             workflow:
                 type: string
                 description: Workflow unique identifier this step belongs to
             user:
                 type: string
                 description: Unique identifier of the creator
-            type:
+            extension:
                 type: string
-                description: Categorize the step. Can be cohort, analysis or result
-            cohort:
-                $ref: '#/definitions/CohortStepModel'
-            analysis:
-                $ref: '#/definitions/AnalysisStepModel'
-            result:
-                $ref: '#/definitions/ResultStepModel'
+                description: Extension ID used in this step
+            action:
+                type: string
+                description: Action sent by the plugin in this step
+            context:
+                type: object
+                description: JSON object representing the context props of the state
     WorkflowStepModel:
         type: object
         description: Workflow step description
@@ -542,6 +705,14 @@ definitions:
             _id:
                 type: string
                 description: Workflow unique identifier
+            create:
+                type: string
+                format: dateTime
+                description: String containing the date and time of creation
+            update:
+                type: string
+                format: dateTime
+                description: Date and time of the last edit
             owner:
                 type: string
                 description: User owning the workflow by unique identifier
@@ -557,5 +728,5 @@ definitions:
                 items:
                     type: string
                     description: User unique identifer
-            root:
+            graph:
                 $ref: '#/definitions/WorkflowStepModel'
