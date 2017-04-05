@@ -16,12 +16,12 @@ function BorderlineServer(config) {
     this.app = express();
 
     this.mongoError = BorderlineServer.prototype.mongoError.bind(this);
-    this.pluginError = BorderlineServer.prototype.pluginError.bind(this);
+    this.extensionError = BorderlineServer.prototype.extensionError.bind(this);
 
     this.setupUserAccount = BorderlineServer.prototype.setupUserAccount.bind(this);
     this.setupDataStore = BorderlineServer.prototype.setupDataStore.bind(this);
-    this.setupPluginStore = BorderlineServer.prototype.setupPluginStore.bind(this);
-    this.setupUserPlugins = BorderlineServer.prototype.setupUserPlugins.bind(this);
+    this.setupExtensionStore = BorderlineServer.prototype.setupExtensionStore.bind(this);
+    this.setupUserExtensions = BorderlineServer.prototype.setupUserExtensions.bind(this);
 
     //Configuration import
     global.config = this.config;
@@ -60,8 +60,8 @@ function BorderlineServer(config) {
         //Setup route using controllers
         that.setupUserAccount();
         that.setupDataStore();
-        that.setupPluginStore();
-        that.setupUserPlugins();
+        that.setupExtensionStore();
+        that.setupUserExtensions();
 
         //Remove unwanted express headers
         that.app.set('x-powered-by', false);
@@ -134,49 +134,49 @@ BorderlineServer.prototype.setupDataStore = function(){
     // ] Data sources routes
 };
 
-BorderlineServer.prototype.setupPluginStore = function() {
-    if (this.config.hasOwnProperty('pluginSourcesFolder') == false) {
-        this.pluginError('No pluginSourcesFolder in options');
+BorderlineServer.prototype.setupExtensionStore = function() {
+    if (this.config.hasOwnProperty('extensionSourcesFolder') == false) {
+        this.extensionError('No extensionSourcesFolder in options');
         return;
     }
-    if (fs.existsSync(this.config.pluginSourcesFolder) == false) {
-        this.pluginError('Directory ' + this.config.pluginSourcesFolder + ' not found');
+    if (fs.existsSync(this.config.extensionSourcesFolder) == false) {
+        this.extensionError('Directory ' + this.config.extensionSourcesFolder + ' not found');
         return;
     }
 
-    var pluginStoreController = require('./controllers/pluginStoreController');
-    this.pluginStoreController = new pluginStoreController(this.db.collection('plugins'));
+    var extensionStoreController = require('./controllers/extensionStoreController');
+    this.extensionStoreController = new extensionStoreController(this.db.collection('extensions'));
 
-    // [ Plugin Store Routes
-    //TEMPORARY getter on a form to upload plugins zip file
-    this.app.get('/plugin_store/upload', this.pluginStoreController.getPluginStoreUpload);
-    //TEMPORARY getter on a form to update plugins zip file
-    this.app.get('/plugin_store/upload/:id', this.pluginStoreController.getPluginStoreUploadByID);
+    // [ Extension Store Routes
+    //TEMPORARY getter on a form to upload extensions zip file
+    this.app.get('/extension_store/upload', this.extensionStoreController.getExtensionStoreUpload);
+    //TEMPORARY getter on a form to update extensions zip file
+    this.app.get('/extension_store/upload/:id', this.extensionStoreController.getExtensionStoreUploadByID);
 
-    this.app.use('/plugins', this.pluginStoreController.getPluginStoreRouter()); //Plugins routers connect here
-    this.app.route('/plugin_store')
-        .get(this.pluginStoreController.getPluginStore) //GET returns the list of available plugins
-        .post(multer().any(), this.pluginStoreController.postPluginStore) //POST upload a new plugin
-        .delete(this.userPermissionsMiddleware.adminPrivileges, this.pluginStoreController.deletePluginStore); //DELETE clears all the plugins
-    this.app.route('/plugin_store/:id')
-        .get(this.pluginStoreController.getPluginByID) //:id GET returns plugin metadata
-        .post(multer().any(), this.pluginStoreController.postPluginByID) //:id POST update a plugin content
-        .delete(this.pluginStoreController.deletePluginByID); //:id DELETE removes a specific plugin
-    // ] Plugin Store Routes
+    this.app.use('/extensions', this.extensionStoreController.getExtensionStoreRouter()); //Extensions routers connect here
+    this.app.route('/extension_store')
+        .get(this.extensionStoreController.getExtensionStore) //GET returns the list of available extensions
+        .post(multer().any(), this.extensionStoreController.postExtensionStore) //POST upload a new extension
+        .delete(this.userPermissionsMiddleware.adminPrivileges, this.extensionStoreController.deleteExtensionStore); //DELETE clears all the extensions
+    this.app.route('/extension_store/:id')
+        .get(this.extensionStoreController.getExtensionByID) //:id GET returns extension metadata
+        .post(multer().any(), this.extensionStoreController.postExtensionByID) //:id POST update a extension content
+        .delete(this.extensionStoreController.deleteExtensionByID); //:id DELETE removes a specific extension
+    // ] Extension Store Routes
 };
 
-BorderlineServer.prototype.setupUserPlugins = function() {
-    var userPluginControllerModule = require('./controllers/userPluginController');
-    this.userPluginController = new userPluginControllerModule(this.db.collection('plugins'));
+BorderlineServer.prototype.setupUserExtensions = function() {
+    var userExtensionControllerModule = require('./controllers/userExtensionController');
+    this.userExtensionController = new userExtensionControllerModule(this.db.collection('extensions'));
 
-     //[ Plugins subscriptions
-    this.app.route('/users/:user_id/plugins')
-        .get(this.userPluginController.getPlugins) //GET List user plugins
-        .delete(this.userPluginController.deletePlugins); //DELETE Forget all plugins for user
-    this.app.route('/users/:user_id/plugins/:plugin_id')
-        .put(this.userPluginController.subscribePlugin) //PUT Subscribe a user to plugin
-        .delete(this.userPluginController.unsubscribePlugin); //DELETE Un-subscribe from a plugin
-    //] Plugins subs
+     //[ Extensions subscriptions
+    this.app.route('/users/:user_id/extensions')
+        .get(this.userExtensionController.getExtensions) //GET List user extensions
+        .delete(this.userExtensionController.deleteExtensions); //DELETE Forget all extensions for user
+    this.app.route('/users/:user_id/extensions/:extension_id')
+        .put(this.userExtensionController.subscribeExtension) //PUT Subscribe a user to extension
+        .delete(this.userExtensionController.unsubscribeExtension); //DELETE Un-subscribe from a extension
+    //] Extensions subs
 };
 
 BorderlineServer.prototype.mongoError = function(message) {
@@ -186,14 +186,14 @@ BorderlineServer.prototype.mongoError = function(message) {
     });
 };
 
-BorderlineServer.prototype.pluginError = function(message) {
-    this.app.all('/plugin_store', function(req, res) {
+BorderlineServer.prototype.extensionError = function(message) {
+    this.app.all('/extension_store', function(req, res) {
         res.status(204);
-        res.json({ error: 'Plugin store is disabled: [' + message + ']' });
+        res.json({ error: 'Extension store is disabled: [' + message + ']' });
     });
-    this.app.all('/plugins/*', function(req, res) {
+    this.app.all('/extensions/*', function(req, res) {
         res.status(204);
-        res.json({ error: 'Plugins are disabled: [' + message + ']'});
+        res.json({ error: 'Extensions are disabled: [' + message + ']'});
     });
 };
 

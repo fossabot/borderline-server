@@ -1,18 +1,18 @@
 const ObjectID = require('mongodb').ObjectID;
 
-function UserPlugins(pluginCollection) {
-    this.pluginCollection = pluginCollection;
+function UserExtensions(extensionCollection) {
+    this.extensionCollection = extensionCollection;
 
-    this.listPlugins = UserPlugins.prototype.listPlugins.bind(this);
-    this.clearPlugins = UserPlugins.prototype.clearPlugins.bind(this);
-    this.subscribe = UserPlugins.prototype.subscribe.bind(this);
-    this.unsubscribe = UserPlugins.prototype.unsubscribe.bind(this);
+    this.listExtensions = UserExtensions.prototype.listExtensions.bind(this);
+    this.clearExtensions = UserExtensions.prototype.clearExtensions.bind(this);
+    this.subscribe = UserExtensions.prototype.subscribe.bind(this);
+    this.unsubscribe = UserExtensions.prototype.unsubscribe.bind(this);
 }
 
-UserPlugins.prototype.listPlugins = function(user_id) {
+UserExtensions.prototype.listExtensions = function(user_id) {
     var that = this;
     return new Promise(function (resolve, reject) {
-        that.pluginCollection.find({ users: [ new ObjectID(user_id) ] }).toArray().then(
+        that.extensionCollection.find({ users: [ new ObjectID(user_id) ] }).toArray().then(
             function (result) {
                 resolve(result);
             },
@@ -23,10 +23,10 @@ UserPlugins.prototype.listPlugins = function(user_id) {
     });
 };
 
-UserPlugins.prototype.clearPlugins = function(user_id) {
+UserExtensions.prototype.clearExtensions = function(user_id) {
     var that = this;
     return new Promise(function(resolve, reject) {
-        that.pluginCollection.updateMany(
+        that.extensionCollection.updateMany(
             { _id: new ObjectID(user_id) },
             {
                 $pull: {
@@ -38,17 +38,17 @@ UserPlugins.prototype.clearPlugins = function(user_id) {
                     resolve(success);
                 },
                 function(error) {
-                    reject('Clear plugins subs error: ' + error.toString());
+                    reject('Clear extensions subs error: ' + error.toString());
                 }
             );
     });
 };
 
-UserPlugins.prototype.subscribe = function(user_id, plugin_id) {
+UserExtensions.prototype.subscribe = function(user_id, extension_id) {
     var that = this;
     return new Promise(function(resolve, reject) {
-        that.pluginCollection.updateOne(
-            { _id: plugin_id },
+        that.extensionCollection.updateOne(
+            { _id: extension_id },
             {
                 $addToSet: {
                     users: new ObjectID(user_id)
@@ -57,7 +57,7 @@ UserPlugins.prototype.subscribe = function(user_id, plugin_id) {
             .then(
                 function(success) {
                     if (success.matchedCount == 0) {
-                        reject('Invalid user_id or plugin_id');
+                        reject('Invalid user_id or extension_id');
                         return;
                     }
                     if (success.modifiedCount == 0) {
@@ -67,18 +67,18 @@ UserPlugins.prototype.subscribe = function(user_id, plugin_id) {
                     resolve(success);
                 },
                 function(error) {
-                    reject('Plugin subscribe error: ' + error.toString());
+                    reject('Extension subscribe error: ' + error.toString());
                 }
             );
     });
 };
 
 
-UserPlugins.prototype.unsubscribe = function(user_id, plugin_id) {
+UserExtensions.prototype.unsubscribe = function(user_id, extension_id) {
     var that = this;
     return new Promise(function(resolve, reject) {
-        that.pluginCollection.updateOne(
-            { _id: plugin_id },
+        that.extensionCollection.updateOne(
+            { _id: extension_id },
             {
                 $pull: {
                     users: new ObjectID(user_id)
@@ -87,7 +87,7 @@ UserPlugins.prototype.unsubscribe = function(user_id, plugin_id) {
             .then(
                 function(success) {
                     if (success.matchedCount == 0) {
-                        reject('Invalid user_id or plugin_id');
+                        reject('Invalid user_id or extension_id');
                         return;
                     }
                     if (success.modifiedCount == 0) {
@@ -97,10 +97,10 @@ UserPlugins.prototype.unsubscribe = function(user_id, plugin_id) {
                     resolve(success);
                 },
                 function(error) {
-                    reject('Plugin subscribe error: ' + error.toString());
+                    reject('Extension subscribe error: ' + error.toString());
                 }
             );
     });
 };
 
-module.exports = UserPlugins;
+module.exports = UserExtensions;

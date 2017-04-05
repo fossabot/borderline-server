@@ -1,19 +1,19 @@
 const fs = require('fs-extra');
 const path = require('path');
 
-function PluginFileSystem(pluginUuid) {
-    this.uuid = pluginUuid;
-    this.root = path.join(global.config.pluginFileSystemFolder, pluginUuid);
+function ExtensionFileSystem(extensionUuid) {
+    this.uuid = extensionUuid;
+    this.root = path.join(global.config.extensionFileSystemFolder, extensionUuid);
     this._bootstrap();
 }
 
-PluginFileSystem.prototype._bootstrap = function() {
+ExtensionFileSystem.prototype._bootstrap = function() {
     if (fs.existsSync(this.root) === false) {
         fs.mkdirSync(this.root);
     }
 };
 
-PluginFileSystem.prototype._isValidPath = function(filePath) {
+ExtensionFileSystem.prototype._isValidPath = function(filePath) {
     var relativeFilePath = path.relative(this.root, filePath);
 
     //Checking user is not trying to go outside it's root filesystem
@@ -22,7 +22,7 @@ PluginFileSystem.prototype._isValidPath = function(filePath) {
     return true;
 };
 
-PluginFileSystem.prototype.close = function(fd) {
+ExtensionFileSystem.prototype.close = function(fd) {
     try {
         fs.close(fd);
     }
@@ -33,14 +33,14 @@ PluginFileSystem.prototype.close = function(fd) {
     return true;
 };
 
-PluginFileSystem.prototype.exists = function(path) {
+ExtensionFileSystem.prototype.exists = function(path) {
     var filePath = path.join(this.root, path);
     if (this._isValidPath(filePath) === false)
         return false;
     return fs.existsSync(filePath);
 };
 
-PluginFileSystem.prototype.mkdir = function(path) {
+ExtensionFileSystem.prototype.mkdir = function(path) {
     var filePath = path.join(this.root, path);
     if (this._isValidPath(filePath) === false)
         return false;
@@ -55,25 +55,25 @@ PluginFileSystem.prototype.mkdir = function(path) {
     return true;
 };
 
-PluginFileSystem.prototype.open = function(path, flags) {
+ExtensionFileSystem.prototype.open = function(path, flags) {
     var filePath = path.join(this.root, path);
     if (this._isValidPath(filePath) === false)
         return -1;
     return fs.openSync(filePath, flags);
 };
 
-PluginFileSystem.prototype.read = function(fd, buf, count) {
+ExtensionFileSystem.prototype.read = function(fd, buf, count) {
     return fs.readSync(fd, buf, 0, count, null) ;
 };
 
-PluginFileSystem.prototype.readFile = function(filePath) {
+ExtensionFileSystem.prototype.readFile = function(filePath) {
     var filePath = path.join(this.root, filePath);
     if (this._isValidPath(filePath) === false)
         return null;
     return fs.readFileSync(filePath);
 };
 
-PluginFileSystem.prototype.rename = function(oldPath, newPath) {
+ExtensionFileSystem.prototype.rename = function(oldPath, newPath) {
     var oldFilePath = path.join(this.root, oldPath);
     var newFilePath = path.join(this.root, newPath);
     if (this._isValidPath(oldFilePath) === false)
@@ -84,7 +84,7 @@ PluginFileSystem.prototype.rename = function(oldPath, newPath) {
     return true;
 };
 
-PluginFileSystem.prototype.rmdir = function(path) {
+ExtensionFileSystem.prototype.rmdir = function(path) {
     var filePath = path.join(this.root, path);
     if (this._isValidPath(filePath) === false)
         return false;
@@ -92,15 +92,15 @@ PluginFileSystem.prototype.rmdir = function(path) {
     return true;
 };
 
-PluginFileSystem.prototype.write = function(fd, buf, count) {
+ExtensionFileSystem.prototype.write = function(fd, buf, count) {
     return fs.writeSync(fd, buf, 0, count, null);
 };
 
-PluginFileSystem.prototype.writeFile = function(path, buf) {
+ExtensionFileSystem.prototype.writeFile = function(path, buf) {
     var filePath = path.join(this.root, path);
     if (this._isValidPath(filePath) === false)
         return null;
     return fs.writeFileSync(filePath, buf);
 };
 
-module.exports = PluginFileSystem;
+module.exports = ExtensionFileSystem;

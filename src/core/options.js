@@ -4,14 +4,14 @@ const fs = require('fs-extra');
 var Options = function(configuration) {
     this.mongoUrl = configuration.mongoUrl ? configuration.mongoUrl : 'mongodb://root:root@127.0.0.1:27020/borderline';
 
-    this.pluginSourcesFolder = configuration.pluginSourcesFolder ? configuration.pluginSourcesFolder : './.plugins/sources';
-    this.pluginFileSystemFolder = configuration.pluginFileSystemFolder ? configuration.pluginFileSystemFolder : './.plugins/filesystem';
+    this.extensionSourcesFolder = configuration.extensionSourcesFolder ? configuration.extensionSourcesFolder : './.extensions/sources';
+    this.extensionFileSystemFolder = configuration.extensionFileSystemFolder ? configuration.extensionFileSystemFolder : './.extensions/filesystem';
     this.borderlineUiFolder =  configuration.borderlineUiFolder ? configuration.borderlineUiFolder : './node-modules/borderline-ui';
     this.development = configuration.development ? configuration.development : false;
     this.enableCors  = configuration.enableCors ? configuration.enableCors : false;
 
-    this._ensureFolder(this.pluginSourcesFolder);
-    this._ensureFolder(this.pluginFileSystemFolder);
+    this._ensureFolder(this.extensionSourcesFolder);
+    this._ensureFolder(this.extensionFileSystemFolder);
 };
 
 

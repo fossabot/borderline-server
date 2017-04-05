@@ -9,8 +9,8 @@ app.set('x-powered-by', false);
 
 app.use(BorderlineServer({
         mongoUrl: config.mongoUrl,
-        pluginSourcesFolder: config.pluginSourcesFolder,
-        pluginFileSystemFolder: config.pluginFileSystemFolder,
+        extensionSourcesFolder: config.extensionSourcesFolder,
+        extensionFileSystemFolder: config.extensionFileSystemFolder,
         uiFolder: config.uiFolder,
         development: true,
         enableCors: config.enableCors

@@ -4,31 +4,31 @@ const path = require('path');
 
 const borderlineApiModule = require('./api');
 
-function Plugin(PluginPath) {
-    this.pluginPath = PluginPath;
-    this.manifest = fs.readJsonSync(path.join(PluginPath, 'plugin.json'));
+function Extension(ExtensionPath) {
+    this.extensionPath = ExtensionPath;
+    this.manifest = fs.readJsonSync(path.join(ExtensionPath, 'plugin.json'));
     this.router = express.Router();
     this.uuid = this.manifest.id;
 
     this.container = null;
     this.borderlineApi = new borderlineApiModule(this.manifest.id);
 
-    //Importing the Plugin
-    this.container = this.webpackImporter(PluginPath);
+    //Importing the Extension
+    this.container = this.webpackImporter(ExtensionPath);
     if (this.container === null || this.container === undefined) { //Fallback for dev
-        this.container = this.importer(PluginPath);
+        this.container = this.importer(ExtensionPath);
     }
 
-    this.attach = Plugin.prototype.attach.bind(this);
-    this.detach = Plugin.prototype.detach.bind(this);
-    this.infos = Plugin.prototype.info.bind(this);
+    this.attach = Extension.prototype.attach.bind(this);
+    this.detach = Extension.prototype.detach.bind(this);
+    this.infos = Extension.prototype.info.bind(this);
 }
 
-Plugin.prototype.info = function() {
+Extension.prototype.info = function() {
     return this.manifest;
 };
 
-Plugin.prototype.webpackImporter = function(importPath) {
+Extension.prototype.webpackImporter = function(importPath) {
     try {
 
         if (this.manifest.hasOwnProperty('server.js') == false || this.manifest.hasOwnProperty('client.js') == false)
@@ -42,29 +42,29 @@ Plugin.prototype.webpackImporter = function(importPath) {
             var code = fs.readFileSync(serverFile);
             //Define borderline in local scope so its found during eval
             var borderline = this.borderlineApi;
-            //Evaluate server plugin Code
+            //Evaluate server extension Code
             var imported = eval(code.toString());
 
-            //Create plugin container object
-            var plugin = Object.assign({
+            //Create extension container object
+            var extension = Object.assign({
                 compiled: true,
                 serverFile: serverFile,
                 clientFile: clientFile,
-                pluginPath: importPath,
+                extensionPath: importPath,
                 serverModule: new imported()
             });
 
-            return plugin; //Success
+            return extension; //Success
         }
     }
     catch (err) {
-        console.error('Webpack plugin import failed: ' + err);
+        console.error('Webpack extension import failed: ' + err);
         return null;
     }
     return null;
 };
 
-Plugin.prototype.importer = function(importPath) {
+Extension.prototype.importer = function(importPath) {
     var serverFile = path.join(importPath, 'server.js');
     var clientFile = path.join(importPath, 'client.js');
 
@@ -80,34 +80,34 @@ Plugin.prototype.importer = function(importPath) {
             var code_pre = '(function (borderline, module, __filename, __directory) { ';
             var code_post = '});';
 
-            //Evaluate server plugin Code
+            //Evaluate server extension Code
             var imported = eval(code_pre + code + code_post);
 
             //Instanciate server module with boderline context
             imported(this.borderlineApi, mod, 'index.js', importPath);
 
-            //Create plugin container object
-            var plugin = {
+            //Create extension container object
+            var extension = {
                 compiled: false,
                 serverFile: serverFile,
                 clientFile: clientFile,
-                pluginPath: importPath,
+                extensionPath: importPath,
                 serverModule: new mod.exports()
             };
-            return plugin; //Success
+            return extension; //Success
         }
     }
     catch (err) {
-        console.error('Classic plugin import failed: ' + err);
+        console.error('Classic extension import failed: ' + err);
         return null;
     }
     return null;
 };
 
-Plugin.prototype.attach = function() {
+Extension.prototype.attach = function() {
     var that = this;
 
-    if (this.container) { //Dynamic plugin features
+    if (this.container) { //Dynamic extension features
         if (this.container.serverModule) {
             this.container.serverModule.attach(this.router);
         }
@@ -127,19 +127,19 @@ Plugin.prototype.attach = function() {
             url = 'index.html';
         }
 
-        var resourcePath = that.pluginPath + '/' + url;
+        var resourcePath = that.extensionPath + '/' + url;
         if (resourcePath.indexOf('..') === -1 && fs.existsSync(resourcePath) === true) {
             return res.sendFile(resourcePath);
         }
         res.status(404);
-        res.json({ error: 'Unresolved plugin internal path /' + url } );
+        res.json({ error: 'Unresolved extension internal path /' + url } );
     });
 };
 
-Plugin.prototype.detach = function() {
+Extension.prototype.detach = function() {
     if (this.container && this.container.serverModule) {
         this.container.serverModule.detach();
     }
 };
 
-module.exports = Plugin;
+module.exports = Extension;
