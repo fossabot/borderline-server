@@ -396,7 +396,7 @@ paths:
                     description: Unsubscribe operation failed
                     schema:
                         $ref: '#/definitions/ErrorModel'
-    /workflows/:
+    /workflow/:
         put:
             tags: [ workflow ]
             description: Creates a new workflow
@@ -410,12 +410,6 @@ paths:
                         properties:
                             name:
                                 description: "Name of the new workflow"
-                                type: string
-                            user:
-                                description: "User identifier creating the workflow.(Optional: Defaults to current user)"
-                                type: string
-                            root:
-                                description: "Root unique identifier for the new workflow. (Optional: Defaults to null)"
                                 type: string
             responses:
                 200:
@@ -705,6 +699,9 @@ definitions:
             _id:
                 type: string
                 description: Workflow unique identifier
+            name:
+                type: string
+                description: Display name of the workflow
             create:
                 type: string
                 format: dateTime

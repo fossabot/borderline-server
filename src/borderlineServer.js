@@ -22,6 +22,7 @@ function BorderlineServer(config) {
     this.setupDataStore = BorderlineServer.prototype.setupDataStore.bind(this);
     this.setupExtensionStore = BorderlineServer.prototype.setupExtensionStore.bind(this);
     this.setupUserExtensions = BorderlineServer.prototype.setupUserExtensions.bind(this);
+    this.setupWorkflows = BorderlineServer.prototype.setupWorkflows.bind(this);
 
     //Configuration import
     global.config = this.config;
@@ -62,6 +63,7 @@ function BorderlineServer(config) {
         that.setupDataStore();
         that.setupExtensionStore();
         that.setupUserExtensions();
+        that.setupWorkflows();
 
         //Remove unwanted express headers
         that.app.set('x-powered-by', false);
@@ -177,6 +179,28 @@ BorderlineServer.prototype.setupUserExtensions = function() {
         .put(this.userExtensionController.subscribeExtension) //PUT Subscribe a user to extension
         .delete(this.userExtensionController.unsubscribeExtension); //DELETE Un-subscribe from a extension
     //] Extensions subs
+};
+
+BorderlineServer.prototype.setupWorkflows = function() {
+    var workflowControllerModule = require('./controllers/workflowController');
+    this.workflowController = new workflowControllerModule(this.db.collection('workflows'), this.db.collection('steps'));
+
+    //[ Workflow endpoints
+    this.app.route('/workflow')
+        .get(this.workflowController.getWorkflow) //GET List all workflow
+        .put(this.workflowController.putWorkflow); //PUT Create a new workflow
+    this.app.route('/workflow/:workflow_id')
+        .get(this.workflowController.getWorkflowByID) //GET A workflow from ID
+        .post(this.workflowController.postWorkflowByID) //POST a workflow from ID
+        .delete(this.workflowController.deleteWorkflowByID); //DELETE a workflow from ID
+    this.app.route('/workflow/:workflow_id/step')
+        .get(this.workflowController.getStep) //GET A workflow steps from workflow ID
+        .put(this.workflowController.putStep);//PUT A new workflow step from workflow ID
+   // this.app.route('/workflow/:workflow_id/step/:step_id')
+        //.get(this.workflowController.getStepByID) //GET A step by ID from a workflow by ID
+        //.post(this.workflowController.postStepByID) //POST A step by ID in a Workflow by ID
+        //.delete(this.workflowController.deleteStepByID); //DELETE a step by ID in a workflow by ID
+    // ] Workflow endpoints
 };
 
 BorderlineServer.prototype.mongoError = function(message) {
