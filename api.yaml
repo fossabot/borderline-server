@@ -1,7 +1,7 @@
 ---
 swagger: '2.0'
 info:
-  version: 0.0.2
+  version: 1.0.0
   title: Borderline server API
   description: |
     #### Rest API for the borderline project
