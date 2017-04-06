@@ -15,6 +15,9 @@ function workflowController(mongoDBCollection_workflow, mongoDBCollection_step) 
     this.deleteWorkflowByID = workflowController.prototype.deleteWorkflowByID.bind(this);
     this.getStep = workflowController.prototype.getStep.bind(this);
     this.putStep = workflowController.prototype.putStep.bind(this);
+    this.getStepByID = workflowController.prototype.getStepByID.bind(this);
+    this.postStepByID = workflowController.prototype.postStepByID.bind(this);
+    this.deleteStepByID = workflowController.prototype.deleteStepByID.bind(this);
 }
 
 
@@ -104,11 +107,58 @@ workflowController.prototype.putStep = function(req, res) {
     this.step.create(workflow_id, req.body).then(function(result) {
             res.status(200);
             res.json(result);
-        },
-        function(error){
+    }, function(error){
+        res.status(401);
+        res.json({ error: 'Creating workflow step failed: ' + error });
+    });
+};
+
+workflowController.prototype.getStepByID = function(req, res) {
+    var step_id = req.params.step_id;
+    this.step.getByID(step_id).then(function (result) {
+        res.status(200);
+        res.json(result);
+    }, function (error) {
+       res.status(401);
+       res.json({ error: 'Cannot get step: ' + error });
+    });
+};
+
+workflowController.prototype.postStepByID = function(req, res){
+    var workflow_id = req.params.workflow_id;
+    var step_id = req.params.step_id;
+    var step_data = req.body;
+    var that = this;
+    this.step.updateByID(step_id, step_data).then(function (step_result) {
+        that.workflow.updateTimestamp(workflow_id).then(function(workflow_result) {
+            res.status(200);
+            res.json(step_result);
+        }, function(workflow_error) {
             res.status(401);
-            res.json({ error: 'Creating workflow step failed: ' + error });
+            res.json({ error: 'Logging update in workflow failed: ' + workflow_error});
         });
+    }, function (step_error) {
+        res.status(401);
+        res.json({ error: 'Update step operation failed: ' + step_error });
+    });
+};
+
+workflowController.prototype.deleteStepByID = function(req, res) {
+    var step_id = req.params.step_id;
+    var workflow_id = req.params.workflow_id;
+    var that = this;
+    this.step.deleteByID(step_id).then(function (result) {
+        that.workflow.updateTimestamp(workflow_id).then(function(workflow_result) {
+            res.status(200);
+            res.json(result);
+        }, function(workflow_error) {
+            res.status(401);
+            res.json({ error: 'Logging delete in workflow failed: ' + workflow_error});
+        });
+    }, function (error) {
+        res.status(401);
+        res.json({ error: 'Delete step operation failed: ' + error });
+    });
 };
 
 module.exports = workflowController;

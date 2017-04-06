@@ -196,10 +196,10 @@ BorderlineServer.prototype.setupWorkflows = function() {
     this.app.route('/workflow/:workflow_id/step')
         .get(this.workflowController.getStep) //GET A workflow steps from workflow ID
         .put(this.workflowController.putStep);//PUT A new workflow step from workflow ID
-   // this.app.route('/workflow/:workflow_id/step/:step_id')
-        //.get(this.workflowController.getStepByID) //GET A step by ID from a workflow by ID
-        //.post(this.workflowController.postStepByID) //POST A step by ID in a Workflow by ID
-        //.delete(this.workflowController.deleteStepByID); //DELETE a step by ID in a workflow by ID
+   this.app.route('/workflow/:workflow_id/step/:step_id')
+        .get(this.workflowController.getStepByID) //GET A step by ID from a workflow by ID
+        .post(this.workflowController.postStepByID) //POST A step by ID in a Workflow by ID
+        .delete(this.workflowController.deleteStepByID); //DELETE a step by ID in a workflow by ID
     // ] Workflow endpoints
 };
 

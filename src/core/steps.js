@@ -4,6 +4,13 @@ const Timestamp = require('mongodb').Timestamp;
 function Steps(workflowCollection, stepCollection) {
     this.workflowCollection = workflowCollection;
     this.stepCollection = stepCollection;
+
+    this.getAll = Steps.prototype.getAll.bind(this);
+    this._graphInsert = Steps.prototype._graphInsert.bind(this);
+    this.create = Steps.prototype.create.bind(this);
+    this.getByID = Steps.prototype.getByID.bind(this);
+    this.updateByID = Steps.prototype.updateByID.bind(this);
+    this.deleteByID = Steps.prototype.deleteByID.bind(this);
 }
 
 Steps.prototype.getAll = function(workflow_id) {
@@ -68,6 +75,59 @@ Steps.prototype.create = function(workflow_id, step_data) {
             reject(stepError);
         });
     });
+};
+
+Steps.prototype.getByID = function(step_id) {
+    var that = this;
+    return new Promise(function(resolve, reject) {
+        that.stepCollection.findOne({_id: new ObjectID(step_id)}).then(function (success) {
+            if (success === null || success === undefined) {
+                reject('Unknown step with id ' + step_id);
+            }
+            else {
+                resolve(success);
+            }
+        }, function (error) {
+            reject(error);
+        });
+    });
+};
+
+Steps.prototype.updateByID = function(step_id, step_data) {
+    var that = this;
+    var time = new Timestamp();
+
+    return new Promise(function(resolve, reject) {
+        delete step_data._id;
+        step_data.update = time;
+        that.stepCollection.findOneAndUpdate({_id: new ObjectID(step_id)}, {$set: step_data}, {returnOriginal: false}).then(function (success) {
+            if (success === null || success === undefined || success.value === null || success.value === undefined) {
+                reject('Unknown step with id ' + step_id);
+            }
+            else {
+                resolve(success.value);
+            }
+        }, function (error) {
+            reject(error);
+        });
+    });
+};
+
+Steps.prototype.deleteByID = function(step_id) {
+  var that = this;
+
+  return new Promise(function(resolve, reject) {
+      that.stepCollection.findOneAndDelete({ _id: new ObjectID(step_id) }).then(function (success) {
+          if (success === null || success === undefined || success.value === null || success.value === undefined) {
+              reject('Unknown step with id ' + step_id);
+          }
+          else {
+              resolve(success);
+          }
+      }, function (error) {
+          reject(error);
+      });
+  });
 };
 
 module.exports = Steps;

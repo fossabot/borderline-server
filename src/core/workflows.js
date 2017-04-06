@@ -6,6 +6,7 @@ function Workflows(workflowCollection) {
 
     this.findAll = Workflows.prototype.findAll.bind(this);
     this.createWorkflow = Workflows.prototype.createWorkflow.bind(this);
+    this.updateTimestamp = Workflows.prototype.updateTimestamp.bind(this);
     this.getWorkflowByID = Workflows.prototype.getWorkflowByID.bind(this);
     this.updateWorkflowByID = Workflows.prototype.updateWorkflowByID.bind(this);
     this.deleteWorkflowByID = Workflows.prototype.deleteWorkflowByID.bind(this);
@@ -46,6 +47,23 @@ Workflows.prototype.createWorkflow = function(data) {
         function(error) {
             reject(error);
         })
+    });
+};
+
+Workflows.prototype.updateTimestamp = function(workflow_id) {
+    var that = this;
+    var time = new Timestamp();
+    return new Promise(function(resolve, reject) {
+       that.workflowCollection.findOneAndUpdate(
+           {_id: new ObjectID(workflow_id) },
+           { $set: {update: time} },
+           { returnOriginal: false }).then(
+               function(success) {
+                   resolve(success);
+               }, function (error) {
+                   reject(error);
+               }
+            );
     });
 };
 
