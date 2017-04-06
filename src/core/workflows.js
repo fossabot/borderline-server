@@ -1,5 +1,4 @@
 const ObjectID = require('mongodb').ObjectID;
-const Timestamp = require('mongodb').Timestamp;
 
 function Workflows(workflowCollection) {
     this.workflowCollection = workflowCollection;
@@ -29,7 +28,7 @@ Workflows.prototype.findAll = function() {
 Workflows.prototype.createWorkflow = function(data) {
     var that = this;
 
-    var time = new Timestamp();
+    var time = new Date();
     var workflowModel = {
         name: data.name,
         create: time,
@@ -41,7 +40,6 @@ Workflows.prototype.createWorkflow = function(data) {
     };
     return new Promise(function(resolve, reject) {
         that.workflowCollection.insertOne(workflowModel).then(function(success) {
-            workflowModel.create = workflowModel.create.toString();
             resolve(workflowModel);
         },
         function(error) {
@@ -52,7 +50,7 @@ Workflows.prototype.createWorkflow = function(data) {
 
 Workflows.prototype.updateTimestamp = function(workflow_id) {
     var that = this;
-    var time = new Timestamp();
+    var time = new Date();
     return new Promise(function(resolve, reject) {
        that.workflowCollection.findOneAndUpdate(
            {_id: new ObjectID(workflow_id) },
@@ -83,7 +81,7 @@ Workflows.prototype.getWorkflowByID = function(workflow_id) {
 
 Workflows.prototype.updateWorkflowByID = function(workflow_id, data) {
     var that = this;
-    var time = new Timestamp();
+    var time = new Date();
     return new Promise(function(resolve, reject) {
         delete data._id;
         delete data.create;

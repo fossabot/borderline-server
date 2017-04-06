@@ -1,5 +1,4 @@
 const ObjectID = require('mongodb').ObjectID;
-const Timestamp = require('mongodb').Timestamp;
 
 function Steps(workflowCollection, stepCollection) {
     this.workflowCollection = workflowCollection;
@@ -45,10 +44,10 @@ Steps.prototype._graphInsert = function(node, stepData) {
 
 Steps.prototype.create = function(workflow_id, step_data) {
     var that = this;
-    var time = new Timestamp();
+    var time = new Date();
     var stepModel = Object.assign({
         create: time,
-        update:time,
+        update: time,
         workflow: workflow_id,
     }, step_data);
 
@@ -95,10 +94,11 @@ Steps.prototype.getByID = function(step_id) {
 
 Steps.prototype.updateByID = function(step_id, step_data) {
     var that = this;
-    var time = new Timestamp();
+    var time = new Date();
 
     return new Promise(function(resolve, reject) {
         delete step_data._id;
+        delete step_data.create;
         step_data.update = time;
         that.stepCollection.findOneAndUpdate({_id: new ObjectID(step_id)}, {$set: step_data}, {returnOriginal: false}).then(function (success) {
             if (success === null || success === undefined || success.value === null || success.value === undefined) {
