@@ -17,7 +17,7 @@ app.use(BorderlineServer({
     }
 ));
 
-app.listen(3000, function (err) {
+app.listen(config.port, function (err) {
     if (err) {
         return console.error(err);
     }
