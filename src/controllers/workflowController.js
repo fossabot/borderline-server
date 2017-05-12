@@ -1,6 +1,13 @@
 const workflowModule = require('../core/workflows.js');
 const stepModule = require('../core/steps.js');
+const defines = require('../defines.js');
 
+/**
+ * @fn workflowContainer
+ * @desc Controller for workflow and step routes
+ * @param mongoDBCollection_workflow Collection where the workflow are stored
+ * @param mongoDBCollection_step Collection where the steps are stored
+ */
 function workflowController(mongoDBCollection_workflow, mongoDBCollection_step) {
     this.workflowCollection = mongoDBCollection_workflow;
     this.stepCollection = mongoDBCollection_step;
@@ -20,22 +27,33 @@ function workflowController(mongoDBCollection_workflow, mongoDBCollection_step) 
     this.deleteStepByID = workflowController.prototype.deleteStepByID.bind(this);
 }
 
-
+/**
+ * @fn getWorkflow
+ * @desc List all workflow on this server
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
 workflowController.prototype.getWorkflow = function(req, res) {
     this.workflow.findAll().then(function(result) {
         res.status(200);
         res.json(result);
     }, function(error) {
         res.status(401);
-        res.json({ error: 'Failed to list workflows: ' + error });
+        res.json(defines.errorStacker('Failed to list workflows', error));
     });
 };
 
+/**
+ * @fn putWorkflow
+ * @desc Create a new workflow
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
 workflowController.prototype.putWorkflow = function(req, res) {
     var data = req.body;
     if (data === null || data === undefined) {
         res.status(401);
-        res.json({ error: 'Cannot create an empty workflow'});
+        res.json(defines.errorStacker('Cannot create an empty workflow'));
         return;
     }
 
@@ -43,7 +61,7 @@ workflowController.prototype.putWorkflow = function(req, res) {
     data.name = data.name ? data.name : 'DefaultWorkflowName';
     if (data.user === null || data.user === undefined) {
         res.status(403);
-        res.json({ error: 'Cannot create a workflow with no owner, please login'});
+        res.json(defines.errorStacker('Cannot create a workflow outside a session'));
         return;
     }
 
@@ -52,10 +70,16 @@ workflowController.prototype.putWorkflow = function(req, res) {
         res.json(result);
     }, function(error) {
         res.status(501);
-        res.json({ error: 'Failed to create workflow: ' + error });
+        res.json(defines.errorStacker('Failed to create workflow', error));
     });
 };
 
+/**
+ * @fn getWorkflowByID
+ * @desc Get a workflow from ID string
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
 workflowController.prototype.getWorkflowByID = function(req, res) {
     var workflow_id = req.params.workflow_id;
     this.workflow.getWorkflowByID(workflow_id).then(function(result){
@@ -63,10 +87,16 @@ workflowController.prototype.getWorkflowByID = function(req, res) {
         res.json(result);
     }, function(error) {
         res.status(401);
-        res.json({ error: 'Cannot get workflow by ID: ' + error });
+        res.json(defines.errorStacker('Cannot get workflow by ID',  error));
     });
 };
 
+/**
+ * @fn postWorkflowByID
+ * @desc Update a workflow identified by ID
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
 workflowController.prototype.postWorkflowByID = function(req, res) {
     var workflow_id = req.params.workflow_id;
     this.workflow.updateWorkflowByID(workflow_id, req.body).then(function(result){
@@ -74,11 +104,16 @@ workflowController.prototype.postWorkflowByID = function(req, res) {
         res.json(result);
     }, function(error) {
         res.status(401);
-        res.json({ error: 'Cannot update workflow by ID: ' + error });
+        res.json(defines.errorStacker('Cannot update workflow by ID', error));
     });
 };
 
-
+/**
+ * @fn deleteWorkflowByID
+ * @desc Delete a workflow referenced by ID
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
 workflowController.prototype.deleteWorkflowByID = function(req, res) {
     var workflow_id = req.params.workflow_id;
     this.workflow.deleteWorkflowByID(workflow_id).then(function(result){
@@ -86,10 +121,16 @@ workflowController.prototype.deleteWorkflowByID = function(req, res) {
         res.json(result);
     }, function(error) {
         res.status(401);
-        res.json({ error: 'Cannot delete workflow by ID: ' + error });
+        res.json(defines.errorStacker('Cannot delete workflow by ID', error));
     });
 };
 
+/**
+ * @fn getStep
+ * @desc List all steps wihtin a workflow
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
 workflowController.prototype.getStep = function(req, res) {
     var workflow_id = req.params.workflow_id;
     this.step.getAll(workflow_id).then(function(result) {
@@ -98,21 +139,33 @@ workflowController.prototype.getStep = function(req, res) {
     },
     function(error){
         res.status(404);
-        res.json({ error: 'Listing workflow steps failed: ' + error });
+        res.json(defines.errorStacker('Listing workflow steps failed', error));
     });
 };
 
+/**
+ * @fn putStep
+ * @desc Create a step within a workflow
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
 workflowController.prototype.putStep = function(req, res) {
     var workflow_id = req.params.workflow_id;
     this.step.create(workflow_id, req.body).then(function(result) {
-            res.status(200);
-            res.json(result);
+        res.status(200);
+        res.json(result);
     }, function(error){
         res.status(401);
-        res.json({ error: 'Creating workflow step failed: ' + error });
+        res.json(defines.errorStacker('Creating workflow step failed', error));
     });
 };
 
+/**
+ * @fn getStepById
+ * @desc Get a step referenced by ID
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
 workflowController.prototype.getStepByID = function(req, res) {
     var step_id = req.params.step_id;
     this.step.getByID(step_id).then(function (result) {
@@ -120,10 +173,16 @@ workflowController.prototype.getStepByID = function(req, res) {
         res.json(result);
     }, function (error) {
        res.status(401);
-       res.json({ error: 'Cannot get step: ' + error });
+       res.json(defines.errorStacker('Cannot get step', error));
     });
 };
 
+/**
+ * @fn postStepByID
+ * @desc Update a step referenced by ID. Update propagates to container workflow
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
 workflowController.prototype.postStepByID = function(req, res){
     var workflow_id = req.params.workflow_id;
     var step_id = req.params.step_id;
@@ -135,14 +194,20 @@ workflowController.prototype.postStepByID = function(req, res){
             res.json(step_result);
         }, function(workflow_error) {
             res.status(401);
-            res.json({ error: 'Logging update in workflow failed: ' + workflow_error});
+            res.json(defines.errorStacker('Logging update in workflow failed', workflow_error));
         });
     }, function (step_error) {
         res.status(401);
-        res.json({ error: 'Update step operation failed: ' + step_error });
+        res.json(defines.errorStacker('Update step operation failed', step_error));
     });
 };
 
+/**
+ * @fn deleteStepByID
+ * @desc Removes a step. Update propagates through the parent workflow
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
 workflowController.prototype.deleteStepByID = function(req, res) {
     var step_id = req.params.step_id;
     var workflow_id = req.params.workflow_id;
@@ -153,11 +218,11 @@ workflowController.prototype.deleteStepByID = function(req, res) {
             res.json(result);
         }, function(workflow_error) {
             res.status(401);
-            res.json({ error: 'Logging delete in workflow failed: ' + workflow_error});
+            res.json(defines.errorStacker('Logging delete in workflow failed', workflow_error));
         });
     }, function (error) {
         res.status(401);
-        res.json({ error: 'Delete step operation failed: ' + error });
+        res.json(defines.errorStacker('Delete step operation failed', error));
     });
 };
 

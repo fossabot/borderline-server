@@ -19,7 +19,8 @@ app.use(BorderlineServer({
 
 app.listen(config.port, function (err) {
     if (err) {
-        return console.error(err);
+        console.error(err);
+        return;
     }
 
     console.log('Listening at http://localhost:3000/');

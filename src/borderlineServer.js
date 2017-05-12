@@ -10,66 +10,28 @@ const passport = require('passport');
 const multer  = require('multer');
 
 const borderlineOptions = require('./core/options');
+const defines = require('./defines.js');
 
 function BorderlineServer(config) {
     this.config = new borderlineOptions(config);
     this.app = express();
 
+    //Configuration import
+    global.config = this.config;
+
+    //Bind member functions
+    this._connectDb = BorderlineServer.prototype._connectDb.bind(this);
     this.mongoError = BorderlineServer.prototype.mongoError.bind(this);
     this.extensionError = BorderlineServer.prototype.extensionError.bind(this);
-
     this.setupUserAccount = BorderlineServer.prototype.setupUserAccount.bind(this);
     this.setupDataStore = BorderlineServer.prototype.setupDataStore.bind(this);
     this.setupExtensionStore = BorderlineServer.prototype.setupExtensionStore.bind(this);
     this.setupUserExtensions = BorderlineServer.prototype.setupUserExtensions.bind(this);
     this.setupWorkflows = BorderlineServer.prototype.setupWorkflows.bind(this);
 
-    //Configuration import
-    global.config = this.config;
-
-    if (this.config.hasOwnProperty('mongoUrl') == false) {
-        this.mongoError('No mongoUrl provided');
-        return this.app;
-    }
-
-    var that = this;
-    mongodb.connect(global.config.mongoUrl, function (err, db) {
-        if (err !== null) {
-            that.mongoError(err.toString());
-            return that.app;
-        }
-        that.db = db;
-        that.mongoStore = new MongoStore({db: that.db, ttl: 6 * (24 * 60 * 60)});
-
-        //Middleware imports
-        that.userPermissionsMiddleware = require('./middlewares/userPermissions');
-
-        //Init external middleware
-
-        that.app.use(body_parser.urlencoded({extended: true}));
-        that.app.use(body_parser.json());
-        that.app.use(expressSession({
-            secret: 'borderline',
-            saveUninitialized: false,
-            resave: false,
-            cookie: {secure: false},
-            store: that.mongoStore
-        }));
-        that.app.use(passport.initialize());
-        that.app.use(passport.session());
-
-        //Setup route using controllers
-        that.setupUserAccount();
-        that.setupDataStore();
-        that.setupExtensionStore();
-        that.setupUserExtensions();
-        that.setupWorkflows();
-
-        //Remove unwanted express headers
-        that.app.set('x-powered-by', false);
-    });
-
-    //Allow CORS request for development mode
+    //Remove unwanted express headers
+    this.app.set('x-powered-by', false);
+    //Allow CORS requests when enabled
     if (this.config.enableCors === true) {
         this.app.use(function (req, res, next) {
             res.header("Access-Control-Allow-Origin", "*");
@@ -78,14 +40,66 @@ function BorderlineServer(config) {
         });
     }
 
+    var _this = this;
+    this._connectDb().then(function() {
+        //Middleware imports
+        _this.userPermissionsMiddleware = require('./middlewares/userPermissions');
+
+        //Init external middleware
+        _this.app.use(body_parser.urlencoded({extended: true}));
+        _this.app.use(body_parser.json());
+        _this.app.use(expressSession({
+            secret: 'borderline',
+            saveUninitialized: false,
+            resave: false,
+            cookie: {secure: false},
+            store: _this.mongoStore
+        }));
+        _this.app.use(passport.initialize());
+        _this.app.use(passport.session());
+
+        //Setup route using controllers
+        _this.setupUserAccount();
+        _this.setupDataStore();
+        _this.setupExtensionStore();
+        _this.setupUserExtensions();
+        _this.setupWorkflows();
+    }, function(error) {
+        this.mongoError(error.toString());
+    });
+
     return this.app;
 }
 
+/**
+ * @fn _connectDb
+ * @desc Setup the connections with mongoDB
+ * @return {Promise} Resolves to true on success
+ * @private
+ */
+BorderlineServer.prototype._connectDb = function() {
+    var _this = this;
+    return new Promise(function(resolve, reject) {
+        mongodb.connect(this.config.mongoUrl, function (err, db) {
+            if (err !== null) {
+                reject('Failed to connect to mongoDB');
+                return;
+            }
+            _this.db = db;
+            _this.mongoStore = new MongoStore({db: db, ttl: defines.sessionTimeout, collection: defines.sessionCollectionName });
+            resolve(true);
+        });
+    });
+};
 
+/**
+ * @fn setupUserAccount
+ * @desc Initialize users account management routes and controller
+ */
 BorderlineServer.prototype.setupUserAccount = function() {
     //Controller imports
     var userAccountController = require('./controllers/userAccountController');
-    this.userAccountController = new userAccountController(this.db.collection('users'));
+    this.userAccountController = new userAccountController(this.db.collection(defines.userCollectionName));
 
     //Passport session serialize and deserialize
     passport.serializeUser(this.userAccountController.serializeUser);
@@ -114,10 +128,14 @@ BorderlineServer.prototype.setupUserAccount = function() {
     // ] Login and sessions routes
 };
 
-BorderlineServer.prototype.setupDataStore = function(){
+/**
+ * @fn setupDataStore
+ * @desc Initialize data sources management routes and controller
+ */
+BorderlineServer.prototype.setupDataStore = function() {
     // Data sources controller import
     var dataStoreControllerModule = require('./controllers/dataStoreController');
-    this.dataStoreController = new dataStoreControllerModule(this.db.collection('data_sources'));
+    this.dataStoreController = new dataStoreControllerModule(this.db.collection(defines.dataSourcesCollectionName));
 
     //[ Data sources routes
     this.app.route('/data_sources/')
@@ -127,7 +145,6 @@ BorderlineServer.prototype.setupDataStore = function(){
         .get(this.dataStoreController.getDataStoreByID) //GET a single data source
         .put(this.dataStoreController.putDataStoreByID) // PUT Update a single data source
         .delete(this.dataStoreController.deleteDataStoreByID); //DELETE a single data source
-
     this.app.route('/users/:user_id/data_sources')
         .get(this.dataStoreController.getUserDataSources); //GET all user's data sources
     this.app.route('/users/:user_id/data_sources/:source_id')
@@ -136,6 +153,10 @@ BorderlineServer.prototype.setupDataStore = function(){
     // ] Data sources routes
 };
 
+/**
+ * @fn setupExtensionStore
+ * @desc Initialize global extensions management routes and controller
+ */
 BorderlineServer.prototype.setupExtensionStore = function() {
     if (this.config.hasOwnProperty('extensionSourcesFolder') == false) {
         this.extensionError('No extensionSourcesFolder in options');
@@ -147,7 +168,7 @@ BorderlineServer.prototype.setupExtensionStore = function() {
     }
 
     var extensionStoreController = require('./controllers/extensionStoreController');
-    this.extensionStoreController = new extensionStoreController(this.db.collection('extensions'));
+    this.extensionStoreController = new extensionStoreController(this.db.collection(defines.extensionsCollectionName));
 
     // [ Extension Store Routes
     //TEMPORARY getter on a form to upload extensions zip file
@@ -167,9 +188,13 @@ BorderlineServer.prototype.setupExtensionStore = function() {
     // ] Extension Store Routes
 };
 
+/**
+ * @fn setupUserExtensions
+ * @desc Initialize users extensions management routes and controller
+ */
 BorderlineServer.prototype.setupUserExtensions = function() {
     var userExtensionControllerModule = require('./controllers/userExtensionController');
-    this.userExtensionController = new userExtensionControllerModule(this.db.collection('extensions'));
+    this.userExtensionController = new userExtensionControllerModule(this.db.collection(defines.extensionsCollectionName));
 
      //[ Extensions subscriptions
     this.app.route('/users/:user_id/extensions')
@@ -181,9 +206,13 @@ BorderlineServer.prototype.setupUserExtensions = function() {
     //] Extensions subs
 };
 
+/**
+ * @fn setupWorkflows
+ * @desc Initialize workflow management routes and controller
+ */
 BorderlineServer.prototype.setupWorkflows = function() {
     var workflowControllerModule = require('./controllers/workflowController');
-    this.workflowController = new workflowControllerModule(this.db.collection('workflows'), this.db.collection('steps'));
+    this.workflowController = new workflowControllerModule(this.db.collection(defines.workflowCollectionName), this.db.collection(defines.stepCollectionName));
 
     //[ Workflow endpoints
     this.app.route('/workflow')
@@ -203,6 +232,11 @@ BorderlineServer.prototype.setupWorkflows = function() {
     // ] Workflow endpoints
 };
 
+/**
+ * @fn mongoError
+ * @desc Disables every routes of the app to send back an error message
+ * @param message A message string to use in responses
+ */
 BorderlineServer.prototype.mongoError = function(message) {
     this.app.all('*', function(req, res) {
         res.status(401);
@@ -210,6 +244,11 @@ BorderlineServer.prototype.mongoError = function(message) {
     });
 };
 
+/**
+ * @fn extensionsError
+ * @desc Disables extension routes to send error message instead
+ * @param message A message string to use in responses
+ */
 BorderlineServer.prototype.extensionError = function(message) {
     this.app.all('/extension_store', function(req, res) {
         res.status(204);
