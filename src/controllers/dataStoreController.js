@@ -42,7 +42,7 @@ dataStoreController.prototype.getDataStore = function(req, res) {
 
 /**
  * @fn postDataStore
- * @desc Update the data srouces on this server
+ * @desc Update the data sources on this server
  * @param req Express.js request object
  * @param res Express.js response object
  */
@@ -53,7 +53,7 @@ dataStoreController.prototype.postDataStore = function(req, res) {
         res.json(defines.errorStacker('Cannot create an empty data source'));
         return;
     }
-    this.dataStore.createDataStore(data_source).then(function(result) {
+    this.dataStore.createDataSource(data_source).then(function(result) {
         res.status(200);
         res.json(result);
     }, function(error) {
@@ -71,7 +71,7 @@ dataStoreController.prototype.postDataStore = function(req, res) {
  */
 dataStoreController.prototype.getDataStoreByID = function(req, res) { //GET a single data source
     var source_id = req.params.source_id;
-    this.dataStore.getDataStoreByID(source_id).then(function(result){
+    this.dataStore.getDataSourceByID(source_id).then(function(result){
         res.status(200);
         res.json(result);
     }, function(error) {
@@ -91,7 +91,7 @@ dataStoreController.prototype.putDataStoreByID = function(req, res) {  // PUT Up
     var source_id = req.params.source_id;
     var data = req.body;
 
-    this.dataStore.updateDataStoreByID(source_id, data).then(function(result){
+    this.dataStore.updateDataSourceByID(source_id, data).then(function(result){
         res.status(200);
         res.json(result);
     }, function(error) {
@@ -109,7 +109,7 @@ dataStoreController.prototype.putDataStoreByID = function(req, res) {  // PUT Up
  */
 dataStoreController.prototype.deleteDataStoreByID = function(req, res) {
     var source_id = req.params.source_id;
-    this.dataStore.deleteDataStoreByID(source_id).then(function(result){
+    this.dataStore.deleteDataSourceByID(source_id).then(function(result){
         res.status(200);
         res.json({deleted: result});
     }, function(error) {
