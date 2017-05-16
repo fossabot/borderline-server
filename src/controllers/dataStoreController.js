@@ -127,7 +127,7 @@ dataStoreController.prototype.deleteDataStoreByID = function(req, res) {
  */
 dataStoreController.prototype.getUserDataSources = function(req, res) {  //GET all user's data sources
     var user_id = req.params.user_id;
-    this.dataStore.getdataStoreByUserID(user_id).then(function (result) {
+    this.dataStore.getDataStoreByUserID(user_id).then(function (result) {
         res.status(200);
         res.json(result);
     }, function(error) {
