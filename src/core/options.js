@@ -1,6 +1,12 @@
 const path = require('path');
 const fs = require('fs-extra');
 
+/**
+ * @fn Options
+ * @param configuration JS configuration object
+ * @desc Complete the configuration object with default values
+ * @constructor
+ */
 var Options = function(configuration) {
     this.mongoUrl = configuration.mongoUrl ? configuration.mongoUrl : 'mongodb://root:root@127.0.0.1:27020/borderline';
 
@@ -14,7 +20,12 @@ var Options = function(configuration) {
     this._ensureFolder(this.extensionFileSystemFolder);
 };
 
-
+/**
+ * @fn _ensureFolder
+ * @desc Makes sure the given folder exists, creates it otherwise
+ * @param inputPath Path string
+ * @private
+ */
 Options.prototype._ensureFolder = function(inputPath) {
     var absolutePath = path.resolve(inputPath);
     var paths = absolutePath.split(path.sep);

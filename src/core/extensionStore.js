@@ -7,20 +7,33 @@ const adm_zip = require('adm-zip');
 
 //Local modules
 var Extension = require('./extension/extension');
+const defines = require('../defines.js');
 
+/**
+ * @fn ExtensionStore
+ * @param extensionCollection MongoDB collection to sync against
+ * @constructor
+ */
 var ExtensionStore = function(extensionCollection) {
     this.extensions = [];
     this.extensionFolder = path.normalize(global.config.extensionSourcesFolder);
     this.extensionCollection = extensionCollection;
     this.router = express.Router();
 
+    //Look what's in the local folder
     this._scanLocalFolder();
     if (global.config.development == true) {
-        this._watchLocalFolder();
+        this._watchLocalFolder(); //Keep updating that
     }
-    this._scanDatabase();
+    this._scanDatabase(); //Sync with the DB
 };
 
+/**
+ * @fn _scanDatabase
+ * @desc Synchronise current extension list with what's inside the DB
+ * and disables missing extensions
+ * @private
+ */
 ExtensionStore.prototype._scanDatabase = function() {
     var that = this;
     this.extensionCollection.find().toArray().then(function(results) {
@@ -32,6 +45,13 @@ ExtensionStore.prototype._scanDatabase = function() {
     });
 };
 
+/**
+ * @_syncExtension
+ * @param extension JS object to represent an extension
+ * @param operation String describing which operation to perform
+ * @return {Promise} Resolve to the update model on success
+ * @private
+ */
 ExtensionStore.prototype._syncExtension = function(extension, operation) {
     var that = this;
     var model = null;
@@ -49,7 +69,7 @@ ExtensionStore.prototype._syncExtension = function(extension, operation) {
 
     return new Promise(function(resolve, reject) {
         var sync_success = function(success) { resolve(success); };
-        var sync_error = function(error) { reject(error); };
+        var sync_error = function(error) { reject(defines.errorStacker('Extension synchronise failed', error)); };
 
         if (operation === 'update' || operation === 'create') {
             that.extensionCollection.findOneAndReplace({_id: extension.uuid}, model, {upsert: true})
@@ -73,12 +93,24 @@ ExtensionStore.prototype._syncExtension = function(extension, operation) {
     });
 };
 
-
+/**
+ * @fn _attachExtension
+ * @desc Plugs in the extension endpoint to the extensions global router
+ * @param extension Instance of a extension object initialized
+ * @private
+ */
 ExtensionStore.prototype._attachExtension = function(extension) {
     extension.attach();
     this.router.use('/' + extension.uuid, extension.router);
 };
 
+/**
+ * @fn _detachExtension
+ * @esc Removes an extension from the router
+ * @param extension Instance of a extension object
+ * @return {boolean} Success status
+ * @private
+ */
 ExtensionStore.prototype._detachExtension = function(extension) {
     extension.detach();
     if (Array.isArray(this.router.stack)) {
@@ -96,6 +128,12 @@ ExtensionStore.prototype._detachExtension = function(extension) {
     return false;
 };
 
+/**
+ * @fn _findExtensionByID
+ * @desc Find an extension from its ID
+ * @param id Unique identifier string
+ * @private
+ */
 ExtensionStore.prototype._findExtensionById = function(id) {
     for (var i = 0; i < this.extensions.length; i++) {
         if (this.extensions[i].uuid === id)
@@ -104,6 +142,11 @@ ExtensionStore.prototype._findExtensionById = function(id) {
     return null;
 };
 
+/**
+ * @fn _watchLocalFolder
+ * @desc Listen for filesystem changes to update extensions list
+ * @private
+ */
 ExtensionStore.prototype._watchLocalFolder = function() {
     var that = this;
     fs.watch(this.extensionFolder,
@@ -153,6 +196,11 @@ ExtensionStore.prototype._watchLocalFolder = function() {
     );
 };
 
+/**
+ * @fn _scanLocalFolder
+ * @desc List files in extension folder, instanciate & initialize them
+ * @private
+ */
 ExtensionStore.prototype._scanLocalFolder = function() {
     var dir_content = fs.readdirSync( this.extensionFolder );
     var that = this;
@@ -170,6 +218,11 @@ ExtensionStore.prototype._scanLocalFolder = function() {
     });
 };
 
+/**
+ * @fn listExtensions
+ * @desc Returns active extension list metadata
+ * @return {Array} Known extensions
+ */
 ExtensionStore.prototype.listExtensions = function() {
     var list = [];
     for (var i = 0; i < this.extensions.length; i++) {
@@ -178,6 +231,11 @@ ExtensionStore.prototype.listExtensions = function() {
     return list;
 };
 
+/**
+ * @fn createExtensionFromFile
+ * @param file Raw zip file
+ * @return {Object} Created extension metadata
+ */
 ExtensionStore.prototype.createExtensionFromFile = function(file) {
     var that = this;
     var buf = Buffer.from(file.buffer);
@@ -191,11 +249,11 @@ ExtensionStore.prototype.createExtensionFromFile = function(file) {
     });
 
     if (manifest === null) {
-        return { error: 'Missing mandatory extension manifest plugin.js' };
+        return defines.errorStacker('Missing mandatory extension manifest plugin.js');
     }
     manifest = JSON.parse(manifest.getData());
     if (manifest === null || manifest.hasOwnProperty('id') == false) {
-        return { error: 'Corrupted extension manifest plugin.js' };
+        return defines.errorStacker('Corrupted extension manifest plugin.js');
     }
 
     //Generate a non-colliding extension UUID
@@ -216,6 +274,10 @@ ExtensionStore.prototype.createExtensionFromFile = function(file) {
     return {id: manifest.id};
 };
 
+/**
+ * @fn clearExtensions
+ * @desc removes every extensions from both router and DB
+ */
 ExtensionStore.prototype.clearExtensions = function() {
     var that = this;
     this.extensions.forEach(function(extension) {
@@ -229,6 +291,11 @@ ExtensionStore.prototype.clearExtensions = function() {
     this.extensions = [];
 };
 
+/**
+ * @fn getExtensionInfoByID
+ * @param id Extension unique identifier
+ * @return {Object} Extension info object
+ */
 ExtensionStore.prototype.getExtensionInfoById = function(id) {
     var  p = this._findExtensionById(id);
     if (p !== null)
@@ -236,6 +303,11 @@ ExtensionStore.prototype.getExtensionInfoById = function(id) {
     return null;
 };
 
+/**
+ * @fn deleteExtensionByID
+ * @param uuid Extension unique identifier to delete
+ * @return {Object} Operation summary object
+ */
 ExtensionStore.prototype.deleteExtensionById = function(uuid) {
     var res = { error: 'Cannot delete extension with ID ' + uuid };
 
@@ -257,6 +329,12 @@ ExtensionStore.prototype.deleteExtensionById = function(uuid) {
     return res;
 };
 
+/**
+ * @fn updateExtensionByID
+ * @param uuid extension reference ID to update
+ * @param file Extension content in .zip format
+ * @return {Object} Operation summary object
+ */
 ExtensionStore.prototype.updateExtensionById = function(uuid, file) {
     var buf = Buffer.from(file.buffer);
     var zip = new adm_zip(buf);
@@ -270,19 +348,19 @@ ExtensionStore.prototype.updateExtensionById = function(uuid, file) {
     });
 
     if (manifest === null) {
-        return { error: 'Missing mandatory extension manifest plugin.json' };
+        return defines.errorStacker('Missing mandatory extension manifest plugin.json');
     }
 
     var delReply = this.deleteExtensionById(uuid);
     if (delReply.hasOwnProperty('error')) {
-        return {error: 'Cannot update unknown extension ID: ' + uuid + ' -- ' + delReply.error};
+        return defines.errorStacker('Cannot update unknown extension ID: ' + uuid + ' -- ' + delReply.error);
     }
 
     zip.extractAllTo(this.extensionFolder, true);
 
     manifest = fs.readJSONSync(path.join(this.extensionFolder, manifest));
     if (manifest === null || manifest.hasOwnProperty('id') == false) {
-        return { error: 'Corrupted extension manifest plugin.json' };
+        return defines.errorStacker('Corrupted extension manifest plugin.json');
     }
     var packageFolder = path.join(this.extensionFolder, manifest.name + '-' + manifest.version);
 
