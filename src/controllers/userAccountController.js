@@ -4,6 +4,12 @@ const speakeasy = require('speakeasy');
 
 var userAccounts = require('../core/userAccounts');
 
+/**
+ * @fn UserAccountController
+ * @desc Contrller to manage the users accounts, sessions & credentials
+ * @param mongoDBCollection MongoDB collection where the users are stored
+ * @constructor
+ */
 function UserAccountController(mongoDBCollection) {
     this.userCollection = mongoDBCollection;
     this.users = new userAccounts(mongoDBCollection);
@@ -22,6 +28,12 @@ function UserAccountController(mongoDBCollection) {
     this.deleteUserById = UserAccountController.prototype.deleteUserById.bind(this);
 }
 
+/**
+ * @fn serializeUser
+ * @desc Called by session middleware to simplify user model
+ * @param deserializedUser User as a plain JS object with all its properties
+ * @param done
+ */
 UserAccountController.prototype.serializeUser = function(deserializedUser, done) {
     if (deserializedUser.hasOwnProperty('_id') == false)
         done('User has no ID', null);
@@ -34,6 +46,12 @@ UserAccountController.prototype.serializeUser = function(deserializedUser, done)
     }
 };
 
+/**
+ * @fn deserializeUser
+ * @desc Called by session middleware to roll back on the user model
+ * @param serializedUser As returned by deserializeUser
+ * @param done Callback to pass the deserialized user result to
+ */
 UserAccountController.prototype.deserializeUser = function(serializedUser, done) {
     this.users.findById(serializedUser.id).then(function (user) {
         done(null, user);
@@ -42,7 +60,13 @@ UserAccountController.prototype.deserializeUser = function(serializedUser, done)
     });
 };
 
-UserAccountController.prototype.getUsers = function(req, res, next) {
+/**
+ * @fn getUsers
+ * @desc Get all users form the server
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
+UserAccountController.prototype.getUsers = function(req, res) {
    this.users.findAll().then(function(users) {
        res.status(200);
        res.json(users);
@@ -53,7 +77,14 @@ UserAccountController.prototype.getUsers = function(req, res, next) {
    });
 };
 
-UserAccountController.prototype.login = function(req, res, next) {
+/**
+ * @fn login
+ * @desc Handles user login, basic
+ * Creates a new session on success
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
+UserAccountController.prototype.login = function(req, res) {
     var that = this;
     var rejected = function(reason) {
         res.status(401);
@@ -95,6 +126,13 @@ UserAccountController.prototype.login = function(req, res, next) {
         }, rejected);
 };
 
+/**
+ * @fn login2
+ * @desc Handles user login, with OAuth2 support.
+ * Creates a new session on success
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
 UserAccountController.prototype.login2 = function(req, res) {
     var rejected = function(reason) {
         res.status(401);
@@ -138,6 +176,12 @@ UserAccountController.prototype.login2 = function(req, res) {
         );
 };
 
+/**
+ * @fn put2step
+ * @desc Given a user ID, re create a new OAuth2 token
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
 UserAccountController.prototype.put2step = function(req, res) {
     var user_id = req.params.user_id;
 
@@ -163,6 +207,12 @@ UserAccountController.prototype.put2step = function(req, res) {
     );
 };
 
+/**
+ * @fn logout
+ * @desc Terminates the current session if any
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
 UserAccountController.prototype.logout = function(req, res) {
     req.session.destroy(function(err) {
         if (req.user === undefined || req.user === null) {
@@ -182,6 +232,13 @@ UserAccountController.prototype.logout = function(req, res) {
     });
 };
 
+/**
+ * @fn whoAmI
+ * @desc Based on the current session,
+ * returns which user if logged in if any
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
 UserAccountController.prototype.whoAmI = function(req, res) {
     var Iam = req.user;
     if (Iam === undefined || Iam === null) {
@@ -194,6 +251,12 @@ UserAccountController.prototype.whoAmI = function(req, res) {
     }
 };
 
+/**
+ * @fn getLoginForm
+ * @desc Get a HTML login form for testing
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
 UserAccountController.prototype.getLoginForm = function(req, res) {
     var form =
     '<form action="/login" method="post">' +
@@ -213,7 +276,13 @@ UserAccountController.prototype.getLoginForm = function(req, res) {
     res.send(form);
 };
 
-UserAccountController.prototype.getUserById = function(req, res, next) {
+/**
+ * @fn getUserByID
+ * @desc Get a user referenced by its unique identifier
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
+UserAccountController.prototype.getUserById = function(req, res) {
     var user_id = req.params.user_id;
 
     this.users.findById(user_id).then(function(user) {
@@ -226,7 +295,13 @@ UserAccountController.prototype.getUserById = function(req, res, next) {
     });
 };
 
-UserAccountController.prototype.postUserById = function(req, res, next) {
+/**
+ * @fn postUserByID
+ * @desc Updates a user referenced by ID
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
+UserAccountController.prototype.postUserById = function(req, res) {
     var user_id = req.params.user_id;
 
     this.users.updateById(user_id, req.body).then(function (user)
@@ -240,7 +315,13 @@ UserAccountController.prototype.postUserById = function(req, res, next) {
         });
 };
 
-UserAccountController.prototype.deleteUserById = function(req, res, next) {
+/**
+ * @fn deleteUSerByID
+ * @desc Removes a user, referenced by its ID
+ * @param req Express.js request object
+ * @param res Express.js response object
+ */
+UserAccountController.prototype.deleteUserById = function(req, res) {
     var user_id = req.params.user_id;
 
     this.users.deleteById(user_id).then(function (user)
