@@ -95,6 +95,7 @@ BorderlineServer.prototype._registryHandler = function() {
             type: 'borderline-server',
             version: package.version,
             timestamp: new Date(),
+            expires_in: defines.registryUpdateInterval / 1000,
             port: _this.config.port,
             ip: ip.address().toString()
         });
