@@ -8,9 +8,12 @@ const MongoStore = require('connect-mongo')(expressSession);
 const body_parser = require('body-parser');
 const passport = require('passport');
 const multer  = require('multer');
+const timer= require('timers');
+const ip = require('ip');
 
 const borderlineOptions = require('./core/options');
 const defines = require('./defines.js');
+const package = require('../package.json');
 
 function BorderlineServer(config) {
     this.config = new borderlineOptions(config);
@@ -21,6 +24,7 @@ function BorderlineServer(config) {
 
     //Bind member functions
     this._connectDb = BorderlineServer.prototype._connectDb.bind(this);
+    this._registryHandler = BorderlineServer.prototype._registryHandler.bind(this);
     this.mongoError = BorderlineServer.prototype.mongoError.bind(this);
     this.extensionError = BorderlineServer.prototype.extensionError.bind(this);
     this.setupUserAccount = BorderlineServer.prototype.setupUserAccount.bind(this);
@@ -64,12 +68,60 @@ function BorderlineServer(config) {
         _this.setupExtensionStore();
         _this.setupUserExtensions();
         _this.setupWorkflows();
+
+        //Setup Registry update
+        _this._registryHandler();
     }, function(error) {
         this.mongoError(error.toString());
     });
 
     return this.app;
 }
+
+/**
+ * @fn _registryHandler
+ * @desc Setup a routine to update the global registry
+ * Put a status object in the DB based on this current configuration
+ * @private
+ */
+BorderlineServer.prototype._registryHandler = function() {
+    var _this = this;
+
+    //Connect to the registry collection
+    this.registry = this.db.collection(defines.globalRegistryCollectionName);
+    var registry_update = function() {
+        //Create status object
+        var status = Object.assign({}, defines.registryModel, {
+            type: 'borderline-server',
+            version: package.version,
+            timestamp: new Date(),
+            port: _this.config.port,
+            ip: ip.address().toString()
+        });
+        //Write in DB
+        //Match by ip + port + type
+        //Create if does not exists.
+        _this.registry.findOneAndReplace({
+            ip: status.ip,
+            port: status.port,
+            type: status.type
+        }, status, { upsert: true, returnOriginal: false })
+            .then(function(success) {
+                //Nothing to do here
+            }, function(error) {
+                //Just log the error
+                // console.log(error);
+            });
+    };
+
+    //Call the update every X milliseconds
+    var interval_timer = timer.setInterval(registry_update, defines.registryUpdateInterval);
+    //Do a first update now
+    registry_update();
+
+    return interval_timer;
+};
+
 
 /**
  * @fn _connectDb

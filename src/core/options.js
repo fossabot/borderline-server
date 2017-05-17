@@ -9,7 +9,7 @@ const fs = require('fs-extra');
  */
 var Options = function(configuration) {
     this.mongoUrl = configuration.mongoUrl ? configuration.mongoUrl : 'mongodb://root:root@127.0.0.1:27020/borderline';
-
+    this.port = configuration.port ? configuration.port : 8080;
     this.extensionSourcesFolder = configuration.extensionSourcesFolder ? configuration.extensionSourcesFolder : './.extensions/sources';
     this.extensionFileSystemFolder = configuration.extensionFileSystemFolder ? configuration.extensionFileSystemFolder : './.extensions/filesystem';
     this.borderlineUiFolder =  configuration.borderlineUiFolder ? configuration.borderlineUiFolder : './node-modules/borderline-ui';

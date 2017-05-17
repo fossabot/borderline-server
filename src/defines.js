@@ -28,7 +28,16 @@ function ErrorStack(error_obj, error_stack) {
     return error;
 }
 
+const registryModel = {
+    type: 'borderline-component',
+    version: '0.0.1',
+    timestamp: '',
+    port: 4242,
+    ip: 'localhost'
+};
+
 module.exports = {
+    globalRegistryCollectionName: 'borderline_global_registry',
     userCollectionName: 'borderline_server_users',
     workflowCollectionName: 'borderline_server_workflows',
     stepCollectionName: 'borderline_server_steps',
@@ -36,5 +45,7 @@ module.exports = {
     extensionsCollectionName: 'borderline_server_extensions',
     sessionCollectionName: 'borderline_server_sessions',
     sessionTimeout: 6 * (24 * 60 * 60), // 6 Days
+    registryUpdateInterval: 60 * 1000, // 60 * 1000 ms = 1 minute
+    registryModel: registryModel,
     errorStacker: ErrorStack
 };

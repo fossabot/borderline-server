@@ -13,7 +13,8 @@ app.use(BorderlineServer({
         extensionFileSystemFolder: config.extensionFileSystemFolder,
         uiFolder: config.uiFolder,
         development: true,
-        enableCors: config.enableCors
+        enableCors: config.enableCors,
+        port: config.port
     }
 ));
 
