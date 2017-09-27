@@ -37,7 +37,7 @@
     "body-parser": "1.18.1",
     "borderline-utils": "^0.1.1",
     "connect-mongo": "1.3.2",
-    "express": "4.15.4",
+    "express": "4.15.5",
     "express-session": "1.15.5",
     "fs-extra": "^4.0.0",
     "mongodb": "2.2.31",
